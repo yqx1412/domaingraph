@@ -1,4 +1,5 @@
 import domaingraph
+from domaingraph.cli import main
 
 
 def test_version() -> None:
@@ -6,5 +7,5 @@ def test_version() -> None:
 
 
 def test_main_runs(capsys) -> None:
-    domaingraph.main()
+    assert main([]) == 0
     assert "domaingraph" in capsys.readouterr().out

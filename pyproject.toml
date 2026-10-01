@@ -4,10 +4,20 @@ version = "0.1.0"
 description = "Domain-aware multimodal knowledge graph: Whisper -> Neo4j -> hybrid search, with an MCP server and Obsidian export."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "faster-whisper>=1.2.1",
+    "pydantic>=2.13.5",
+    "pypdf>=6.19.0",
+]
 
 [project.scripts]
 domaingraph = "domaingraph:main"
+
+[project.optional-dependencies]
+gpu = [
+    "nvidia-cublas-cu12>=12.4,<13",
+    "nvidia-cudnn-cu12>=9,<10",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]

@@ -1,0 +1,19 @@
+Welcome to lecture seven of distributed systems. Today we are going to talk about the Raft consensus algorithm, which was designed to be easier to understand than Paxos.
+
+Let us start with the problem. We have a cluster of servers, usually five, and we want them to agree on a sequence of commands, called the replicated log. If every server applies the same commands in the same order, every server ends up in the same state. This is called state machine replication.
+
+Raft splits the problem into three parts. The first part is leader election. The second part is log replication. The third part is safety.
+
+At any time, each server is in one of three states. It is a follower, a candidate, or a leader. In normal operation there is exactly one leader, and all the other servers are followers. Followers are passive. They only respond to requests from the leader and from candidates.
+
+Time is divided into terms. Each term begins with an election. Terms are numbered with consecutive integers, and every server stores the current term number. If a server sees a larger term number, it updates its own term and becomes a follower.
+
+How does an election start? Every follower has an election timeout, which is a random value between one hundred fifty and three hundred milliseconds. If a follower hears nothing from the leader before the timeout expires, it increments its term, becomes a candidate, votes for itself, and asks the other servers for their votes. A candidate wins if it receives votes from a majority of the cluster. With five servers, a majority is three. The random timeout makes it unlikely that two candidates start an election at the same moment, which is how Raft avoids split votes most of the time.
+
+Once a leader is elected, it handles all client requests. The leader appends each command to its own log and sends append entries messages to the followers. When a majority of servers have stored an entry, the entry is committed, and the leader can apply it to its state machine and answer the client. The leader also sends empty append entries messages as heartbeats, so that followers do not start new elections.
+
+Now, safety. The key rule is that a server only votes for a candidate whose log is at least as up to date as its own. This guarantees that any newly elected leader already contains every committed entry. We call this the leader completeness property.
+
+Finally, a word about cluster size. A cluster of five servers can tolerate two failures. A cluster of three servers can tolerate only one failure. Adding a sixth server does not help, because a majority of six is four, so it still tolerates only two failures.
+
+For next week, please read the Raft paper, sections five and six, and think about what happens when the network splits the cluster into two halves.
