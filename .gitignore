@@ -13,3 +13,6 @@ wheels/
 .env
 runs/
 *.jsonl
+
+# Ingested sources (transcripts, chunks); see `domaingraph --out`
+data/
