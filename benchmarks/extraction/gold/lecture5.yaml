@@ -1,0 +1,178 @@
+source_id: 1c28a3b4720dda55
+title: "MIT 6.006 Fall 2011, Lecture 5: Binary Search Trees, BST Sort"
+concepts:
+  - name: binary search tree
+    aliases: [BST, BSTs]
+    type: data_structure
+    core: true
+    chunks: [0, 15, 16, 17, 18, 19, 22, 24, 25, 29]
+  - name: augmented binary search tree
+    aliases: [augmented BST, BST augmentation, augmentation]
+    type: data_structure
+    core: true
+    chunks: [28, 29, 30, 31, 32, 34]
+  - name: balanced binary search tree
+    aliases: [balanced BST]
+    type: data_structure
+    core: false
+    chunks: [42]
+  - name: binary search
+    aliases: []
+    type: algorithm
+    core: true
+    chunks: [0, 7, 9, 10, 15, 20]
+  - name: divide and conquer
+    aliases: []
+    type: technique
+    core: false
+    chunks: [0]
+  - name: runway reservation system
+    aliases: [runway reservation problem, scheduling problem]
+    type: problem
+    core: true
+    chunks: [0, 1, 2, 3, 19, 26]
+  - name: k-minute check
+    aliases: [k minute check, safety constraint]
+    type: operation
+    core: true
+    chunks: [2, 3, 20, 21, 22, 23, 33]
+  - name: insert
+    aliases: [insertion]
+    type: operation
+    core: true
+    chunks: [2, 3, 6, 7, 8, 19, 20, 22, 32, 33]
+  - name: delete
+    aliases: [remove, removal, deletion]
+    type: operation
+    core: true
+    chunks: [3, 32, 35]
+  - name: find
+    aliases: [search, lookup]
+    type: operation
+    core: true
+    chunks: [24, 25, 38]
+  - name: find min
+    aliases: [find minimum]
+    type: operation
+    core: false
+    chunks: [27]
+  - name: find max
+    aliases: [find maximum]
+    type: operation
+    core: false
+    chunks: [27, 28]
+  - name: next larger
+    aliases: [next larger x, successor]
+    type: operation
+    core: false
+    chunks: [28]
+  - name: rank
+    aliases: [rank t]
+    type: operation
+    core: true
+    chunks: [29, 30, 36, 37, 38, 40, 41]
+  - name: subtree size
+    aliases: [subtree sizes, size]
+    type: property
+    core: true
+    chunks: [31, 32, 33, 36, 38, 39, 40]
+  - name: BST invariant
+    aliases: [binary search tree property, BST property]
+    type: property
+    core: true
+    chunks: [16, 17, 18, 19]
+  - name: tree height
+    aliases: [height, height of the tree, h]
+    type: complexity
+    core: true
+    chunks: [22, 24, 27, 28, 41, 42]
+  - name: logarithmic time
+    aliases: [order log n, log n]
+    type: complexity
+    core: true
+    chunks: [3, 4, 8, 9, 10, 15, 30, 42]
+  - name: linear time
+    aliases: [order n, linear]
+    type: complexity
+    core: false
+    chunks: [6, 7, 11, 12, 14, 41]
+  - name: constant time
+    aliases: [order 1, constant]
+    type: complexity
+    core: false
+    chunks: [6, 8, 10, 27]
+  - name: unsorted array
+    aliases: [unsorted list, array]
+    type: data_structure
+    core: false
+    chunks: [6, 7]
+  - name: sorted array
+    aliases: []
+    type: data_structure
+    core: true
+    chunks: [7, 8, 9, 10, 15, 21]
+  - name: sorted list
+    aliases: [linked list, list]
+    type: data_structure
+    core: false
+    chunks: [10, 11, 21]
+  - name: heap
+    aliases: [min heap, max heap, min-heap, max-heap]
+    type: data_structure
+    core: false
+    chunks: [11, 12, 13, 14, 16, 27]
+  - name: heap invariant
+    aliases: [min heap property, heap property]
+    type: property
+    core: false
+    chunks: [11, 12, 14, 16, 18]
+  - name: heapify
+    aliases: [min heapify, max heapify]
+    type: algorithm
+    core: false
+    chunks: [14, 15]
+  - name: insertion point
+    aliases: []
+    type: property
+    core: false
+    chunks: [8, 9, 10]
+  - name: node key
+    aliases: [key, key of x]
+    type: property
+    core: false
+    chunks: [16, 17, 25]
+  - name: multiset
+    aliases: [multi-set]
+    type: data_structure
+    core: false
+    chunks: [25]
+relations:
+  - {subject: binary search tree, predicate: contrasts_with, object: sorted array, chunks: [21, 22]}
+  - {subject: binary search tree, predicate: uses, object: binary search, chunks: [15, 20]}
+  - {subject: binary search tree, predicate: solves, object: runway reservation system, chunks: [15, 19]}
+  - {subject: binary search tree, predicate: has_property, object: BST invariant, chunks: [16, 17, 18]}
+  - {subject: binary search tree, predicate: has_property, object: tree height, chunks: [22, 24]}
+  - {subject: binary search tree, predicate: contrasts_with, object: heap, chunks: [16, 17, 18]}
+  - {subject: augmented binary search tree, predicate: is_a, object: binary search tree, chunks: [29, 30]}
+  - {subject: augmented binary search tree, predicate: has_property, object: subtree size, chunks: [31, 32]}
+  - {subject: augmented binary search tree, predicate: solves, object: runway reservation system, chunks: [29, 30]}
+  - {subject: balanced binary search tree, predicate: is_a, object: binary search tree, chunks: [42]}
+  - {subject: balanced binary search tree, predicate: has_property, object: logarithmic time, chunks: [42]}
+  - {subject: insert, predicate: part_of, object: binary search tree, chunks: [19, 22]}
+  - {subject: delete, predicate: part_of, object: binary search tree, chunks: [35]}
+  - {subject: find, predicate: part_of, object: binary search tree, chunks: [24, 25]}
+  - {subject: find min, predicate: part_of, object: binary search tree, chunks: [27]}
+  - {subject: find max, predicate: part_of, object: binary search tree, chunks: [27, 28]}
+  - {subject: next larger, predicate: part_of, object: binary search tree, chunks: [28]}
+  - {subject: rank, predicate: part_of, object: augmented binary search tree, chunks: [36, 38]}
+  - {subject: rank, predicate: uses, object: subtree size, chunks: [38, 40]}
+  - {subject: insert, predicate: uses, object: k-minute check, chunks: [22, 23]}
+  - {subject: insert, predicate: has_property, object: tree height, chunks: [22, 24]}
+  - {subject: find min, predicate: has_property, object: tree height, chunks: [27, 28]}
+  - {subject: rank, predicate: has_property, object: tree height, chunks: [37, 40]}
+  - {subject: heap, predicate: has_property, object: heap invariant, chunks: [11, 12]}
+  - {subject: heap, predicate: uses, object: heapify, chunks: [14, 15]}
+  - {subject: sorted array, predicate: uses, object: binary search, chunks: [7, 9]}
+  - {subject: sorted array, predicate: has_property, object: insertion point, chunks: [8, 9]}
+  - {subject: sorted array, predicate: contrasts_with, object: sorted list, chunks: [10, 11, 21]}
+  - {subject: BST invariant, predicate: contrasts_with, object: heap invariant, chunks: [16, 18]}

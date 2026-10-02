@@ -1,4 +1,4 @@
-"""``domaingraph ingest|sources|show|wer``."""
+"""``domaingraph ingest|sources|show|wer|extract|merge|concepts|eval-extract``."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ from domaingraph.models import KIND_BY_SUFFIX, timestamp
 from domaingraph.pipeline import ingest, list_sources, load_source
 
 DEFAULT_OUT = Path("data")
+DEFAULT_EXTRACT_MODEL = "qwen3:14b"
+DEFAULT_MERGE_THRESHOLD = 0.85
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,7 +47,55 @@ def build_parser() -> argparse.ArgumentParser:
     wer = sub.add_parser("wer", help="Word error rate of a transcript against a reference")
     wer.add_argument("source_id")
     wer.add_argument("reference", type=Path, help="Reference text file")
+
+    ex = sub.add_parser("extract", help="Extract concepts, relations and facts with an LLM")
+    ex.add_argument("source_ids", nargs="*", help="Source ids or prefixes (default: all)")
+    ex.add_argument("--model", default=DEFAULT_EXTRACT_MODEL)
+    ex.add_argument("--force", action="store_true", help="Re-extract chunks already done")
+    ex.add_argument(
+        "--no-known", action="store_true", help="Don't show earlier concept names in prompts"
+    )
+    _merge_args(ex)
+
+    mg = sub.add_parser("merge", help="Re-merge saved extractions into one knowledge file")
+    mg.add_argument("--model", default=DEFAULT_EXTRACT_MODEL)
+    _merge_args(mg)
+
+    cs = sub.add_parser("concepts", help="List merged concepts")
+    cs.add_argument("--model", default=DEFAULT_EXTRACT_MODEL)
+    cs.add_argument("--source", default=None, help="Only concepts mentioned in this source")
+    cs.add_argument("--limit", type=int, default=None)
+
+    ev = sub.add_parser("eval-extract", help="Score extractions against gold sets")
+    ev.add_argument("--models", default=DEFAULT_EXTRACT_MODEL, help="Comma-separated")
+    ev.add_argument("--gold", type=Path, default=Path("benchmarks/extraction/gold"))
+    ev.add_argument("--lenient-threshold", type=float, default=0.85)
+    ev.add_argument("--report", type=Path, default=None, help="Write a Markdown report here")
+    ev.add_argument("--details", action="store_true", help="Print matches, misses, FPs")
+    ev.add_argument(
+        "--min-chunks",
+        default="1",
+        help="Count a concept only if this many chunks of the lecture mention it; "
+        "comma-separated to compare (e.g. 1,2,3)",
+    )
+    ev.add_argument(
+        "--sweep",
+        default=None,
+        help="Comma-separated merge thresholds to compare instead (e.g. 0.8,0.85,0.9,1.01)",
+    )
+    _merge_args(ev)
     return p
+
+
+def _merge_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--embed-model", default="bge-m3")
+    p.add_argument(
+        "--threshold",
+        type=float,
+        default=DEFAULT_MERGE_THRESHOLD,
+        help=f"Embedding merge threshold (default: {DEFAULT_MERGE_THRESHOLD})",
+    )
+    p.add_argument("--no-embed", action="store_true", help="Merge by names only")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -59,6 +109,19 @@ def main(argv: list[str] | None = None) -> int:
         return _show(args)
     if args.command == "wer":
         return _wer(args)
+    if args.command in ("extract", "merge", "concepts", "eval-extract"):
+        from domaingraph.llm import LLMError
+
+        try:
+            return {
+                "extract": _extract,
+                "merge": _merge,
+                "concepts": _concepts,
+                "eval-extract": _eval_extract,
+            }[args.command](args)
+        except LLMError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
     parser.print_help()
     return 0
 
@@ -181,5 +244,271 @@ def _wer(args: argparse.Namespace) -> int:
     print(
         f"WER {r.wer:.2%}  ({r.substitutions} substitutions, {r.deletions} deletions, "
         f"{r.insertions} insertions; {r.reference_words} reference words)"
+    )
+    return 0
+
+
+# --- D2: extraction -----------------------------------------------------------------------
+
+
+def _knowledge_path(out: Path, model: str) -> Path:
+    from domaingraph.extraction import model_slug
+
+    return out / "knowledge" / f"{model_slug(model)}.json"
+
+
+def _embedder(args: argparse.Namespace):
+    if args.no_embed:
+        return None
+    from domaingraph.llm import OllamaEmbedder
+
+    return OllamaEmbedder(args.embed_model)
+
+
+def _merged(out: Path, model: str, args: argparse.Namespace, embedder=None):
+    """Merge every source's saved extraction for ``model``."""
+    from domaingraph.extraction import load_results
+    from domaingraph.merge import merge
+
+    results = []
+    for s in list_sources(out):
+        results += [r for r in load_results(out, s.id, model) if r.error is None]
+    emb = embedder if embedder is not None else _embedder(args)
+    return merge(results, embedder=emb, threshold=args.threshold, model=model)
+
+
+def _write_knowledge(out: Path, kn) -> Path:
+    p = _knowledge_path(out, kn.model)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(kn.model_dump_json(indent=1), encoding="utf-8")
+    return p
+
+
+def _extract(args: argparse.Namespace) -> int:
+    from domaingraph.extraction import extract_source
+    from domaingraph.llm import OllamaStructured
+
+    if args.source_ids:
+        ids = [_resolve(args.out, x) for x in args.source_ids]
+        if None in ids:
+            return 2
+    else:
+        ids = [s.id for s in list_sources(args.out)]
+    if not ids:
+        print("error: nothing ingested yet", file=sys.stderr)
+        return 2
+    llm = OllamaStructured(args.model)
+    errors = 0
+    try:
+        for sid in ids:
+            source, chunks = load_source(args.out, sid)
+            print(f"# {source.title} ({len(chunks)} chunks) with {args.model}", flush=True)
+
+            def show(r, reused):
+                nonlocal errors
+                if r.error:
+                    errors += 1
+                    print(f"  [{r.index:>3}] {r.locator}  ERROR {r.error}", flush=True)
+                elif not reused:
+                    e = r.extraction
+                    print(
+                        f"  [{r.index:>3}] {r.locator}  {len(e.concepts)} concepts, "
+                        f"{len(e.relations)} relations, {len(e.facts)} facts  ({r.seconds} s)",
+                        flush=True,
+                    )
+
+            extract_source(
+                llm,
+                source,
+                chunks,
+                out=args.out,
+                force=args.force,
+                known_names=not args.no_known,
+                on_chunk=show,
+            )
+    finally:
+        llm.unload()  # free VRAM for the embedding model and the next run
+        llm.close()
+    kn = _merged(args.out, args.model, args)
+    path = _write_knowledge(args.out, kn)
+    st = kn.stats
+    print(
+        f"merged {st['mentions']} concept mentions -> {st['concepts']} concepts "
+        f"({st['embedding_merges']} by embedding), {st['relations']} relations, "
+        f"{st['facts']} facts -> {path}"
+    )
+    if errors:
+        print(f"{errors} chunks failed; run extract again to retry them", file=sys.stderr)
+    return 1 if errors else 0
+
+
+def _merge(args: argparse.Namespace) -> int:
+    kn = _merged(args.out, args.model, args)
+    if not kn.sources:
+        print(f"error: no extractions for {args.model}", file=sys.stderr)
+        return 2
+    path = _write_knowledge(args.out, kn)
+    print(f"{kn.stats['concepts']} concepts, {kn.stats['relations']} relations -> {path}")
+    return 0
+
+
+def _concepts(args: argparse.Namespace) -> int:
+    from domaingraph.merge import Knowledge
+
+    p = _knowledge_path(args.out, args.model)
+    if not p.is_file():
+        print(f"error: no knowledge file for {args.model}; run extract first", file=sys.stderr)
+        return 2
+    kn = Knowledge.model_validate_json(p.read_text(encoding="utf-8"))
+    sid = _resolve(args.out, args.source) if args.source else None
+    if args.source and sid is None:
+        return 2
+    cs = [c for c in kn.concepts if sid is None or any(m.source_id == sid for m in c.mentions)]
+    cs.sort(key=lambda c: -len(c.mentions))
+    for c in cs[: args.limit]:
+        ms = [m for m in c.mentions if sid is None or m.source_id == sid]
+        where = ", ".join(m.locator for m in ms[:4]) + (" ..." if len(ms) > 4 else "")
+        alias = f"  (aka {', '.join(c.aliases[:4])})" if c.aliases else ""
+        print(f"{c.name}{alias}  [{c.type}, {len(ms)} mentions, conf {c.confidence:.2f}]")
+        print(f"    {c.definition}")
+        print(f"    at {where}")
+    return 0
+
+
+def _eval_extract(args: argparse.Namespace) -> int:
+    from domaingraph.evaluate_extraction import (
+        SUMMARY_HEADER,
+        load_gold_dir,
+        markdown_table,
+        score_source,
+        summary_rows,
+    )
+
+    golds = load_gold_dir(args.gold)
+    if not golds:
+        print(f"error: no gold files in {args.gold}", file=sys.stderr)
+        return 2
+    if args.sweep:
+        return _sweep(args, golds)
+    embedder = _embedder(args)
+    lenient = embedder
+    if lenient is None:
+        from domaingraph.llm import OllamaEmbedder
+
+        lenient = OllamaEmbedder(args.embed_model)
+    scores = {}
+    min_chunks = [int(x) for x in args.min_chunks.split(",") if x.strip()]
+    for model in [m.strip() for m in args.models.split(",") if m.strip()]:
+        kn = _merged(args.out, model, args, embedder=embedder)
+        missing = [g.source_id for g in golds if g.source_id not in kn.sources]
+        if missing:
+            print(f"error: {model} has no extraction for {', '.join(missing)}", file=sys.stderr)
+            return 2
+        for k in min_chunks:
+            key = model if min_chunks == [1] else f"{model}, >= {k} chunks"
+            scores[key] = [
+                score_source(
+                    kn,
+                    g,
+                    embedder=lenient,
+                    lenient_threshold=args.lenient_threshold,
+                    min_chunks=k,
+                )
+                for g in golds
+            ]
+        if args.details:
+            for s in scores[key]:
+                print(f"\n## {key}: {s.title}")
+                print(
+                    f"  matched ({len(s.matched)}): "
+                    + "; ".join(
+                        f"{k} -> {v}" if k != v else k for k, v in sorted(s.matched.items())
+                    )
+                )
+                print(f"  not in gold ({len(s.false_positives)}): " + ", ".join(s.false_positives))
+                print(f"  missed ({len(s.missed)}): " + ", ".join(s.missed))
+    merge_desc = "names only" if args.no_embed else f"{args.embed_model} >= {args.threshold}"
+    table = markdown_table(SUMMARY_HEADER, summary_rows(scores))
+    print(f"\nGold: {len(golds)} sources, merge: {merge_desc}\n")
+    print(table)
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        per_source = []
+        for model, ss in scores.items():
+            for s in ss:
+                per_source.append(
+                    [
+                        model,
+                        s.title.split(": ", 1)[-1],
+                        f"{s.concepts.precision:.0%} / {s.concepts.recall:.0%}",
+                        f"{s.core_recall.recall:.0%}",
+                        f"{s.relations.precision:.0%} / {s.relations.recall:.0%}",
+                        ", ".join(s.missed_core) or "-",
+                    ]
+                )
+        body = (
+            f"# D2 extraction results\n\nGold: {len(golds)} sources; merge: {merge_desc}; "
+            f"lenient match: {args.embed_model} >= {args.lenient_threshold}\n\n{table}\n\n"
+            "## Per source\n\n"
+            + markdown_table(
+                ["Model", "Lecture", "Concepts P / R", "Core R", "Relations P / R", "Missed core"],
+                per_source,
+            )
+            + "\n"
+        )
+        args.report.write_text(body, encoding="utf-8")
+        print(f"\nreport -> {args.report}")
+    return 0
+
+
+def _sweep(args: argparse.Namespace, golds) -> int:
+    """Merge quality and concept scores across embedding thresholds (names-only first)."""
+    from domaingraph.evaluate_extraction import PRF, markdown_table, merge_quality, score_source
+    from domaingraph.llm import OllamaEmbedder
+
+    class Cached:
+        """Same embedder, memoized: a sweep embeds the same names many times."""
+
+        def __init__(self, inner):
+            self.inner, self.model, self.memo = inner, inner.model, {}
+
+        def embed(self, texts):
+            todo = [t for t in dict.fromkeys(texts) if t not in self.memo]
+            self.memo.update(zip(todo, self.inner.embed(todo), strict=True))
+            return [self.memo[t] for t in texts]
+
+    emb = Cached(OllamaEmbedder(args.embed_model))
+    rows = []
+    for model in [m.strip() for m in args.models.split(",") if m.strip()]:
+        for t in ["names", *[x.strip() for x in args.sweep.split(",")]]:
+            args.no_embed, args.threshold = t == "names", 1.0 if t == "names" else float(t)
+            kn = _merged(args.out, model, args, embedder=None if args.no_embed else emb)
+            ss = [score_source(kn, g, embedder=None) for g in golds]
+            c = sum((s.concepts for s in ss), PRF())
+            mq = merge_quality(kn, golds)
+            rows.append(
+                [
+                    model,
+                    t,
+                    str(kn.stats["concepts"]),
+                    str(kn.stats["embedding_merges"]),
+                    f"{mq.precision:.1%} / {mq.recall:.1%}",
+                    f"{c.precision:.0%} / {c.recall:.0%}",
+                    str(sum(s.duplicates for s in ss)),
+                ]
+            )
+    print(
+        markdown_table(
+            [
+                "Model",
+                "Threshold",
+                "Concepts",
+                "Emb. merges",
+                "Merge P / R",
+                "Concepts P / R",
+                "Dups",
+            ],
+            rows,
+        )
     )
     return 0

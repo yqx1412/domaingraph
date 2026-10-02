@@ -132,8 +132,10 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "faster-whisper" },
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "pypdf" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -152,10 +154,12 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "faster-whisper", specifier = ">=1.2.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "nvidia-cublas-cu12", marker = "extra == 'gpu'", specifier = ">=12.4,<13" },
     { name = "nvidia-cudnn-cu12", marker = "extra == 'gpu'", specifier = ">=9,<10" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pypdf", specifier = ">=6.19.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 provides-extras = ["gpu"]
 
