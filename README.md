@@ -72,9 +72,54 @@ domaingraph eval-extract --models qwen3:8b --sweep 0.75,0.85,0.9   # merge thres
 - **qwen3:8b beats qwen3:14b here**, because 14b lists more concepts at the same recall.
 - **llama3.1:8b returns empty output for 125 of 131 chunks.**
 
-**Caveat:** the gold sets were drafted by AI annotators (one per lecture, without seeing any extractor output) and then corrected in review. No human has checked them yet, so these numbers measure agreement with that annotation.
+**Caveat:** the gold sets were drafted by AI annotators (one per lecture, without seeing any extractor output), corrected in review, then revised in a second pass with the user. These numbers measure agreement with that annotation.
 
 Full write-up, including the merge-threshold sweep and the prompt v1 -> v2 change: [`benchmarks/extraction/results/d2-extraction.md`](benchmarks/extraction/results/d2-extraction.md).
+
+## D3: graph store
+
+Neo4j 5.26 (LTS) runs in Docker, listening on `127.0.0.1` only:
+
+```powershell
+copy .env.example .env      # then set NEO4J_PASSWORD
+docker compose up -d
+uv run domaingraph graph load                 # qwen3:8b knowledge + bge-m3 embeddings
+uv run domaingraph graph trace "AVL tree"     # concept -> relations -> sources with timestamps
+uv run domaingraph graph similar "keeping a search tree balanced"   # vector index
+uv run domaingraph graph stats
+```
+
+**Schema** (`src/domaingraph/graph.py`):
+
+```text
+(:Source)  -[:PART_OF]->  (:Domain)
+(:Chunk)   -[:PART_OF]->  (:Source)        text, start/end seconds, locator "05:23-06:41"
+(:Concept) -[:PART_OF]->  (:Domain)
+(:Concept) -[:RELATED_TO {predicate}]-> (:Concept)   is_a, uses, solves, has_property, contrasts_with
+(:Concept) -[:PART_OF]->  (:Concept)       the part_of predicate
+(:Concept) -[:MENTIONED_IN {surfaces, confidence, locator}]-> (:Chunk)
+(:Fact)    -[:MENTIONED_IN]-> (:Chunk),  (:Fact) -[:ABOUT]-> (:Concept)
+```
+
+- **`Chunk` is one addition to the roadmap's node list.** A timestamp belongs to a passage, not to a whole lecture, and D4's vector-only search ranks passages.
+- **Embeddings live in Neo4j's vector indexes**, `concept_embedding` ("name: definition") and `chunk_embedding` (passage text), both bge-m3 with 1024 dimensions and cosine similarity.
+- **Loading is idempotent.** Every node and edge is written with `MERGE` on a stable key. A reload leaves every count unchanged and re-embeds nothing, since each node stores a hash of its embedded text. Concepts and facts an earlier load wrote but the new one lacks are removed, so the graph mirrors one knowledge file.
+- **One extraction model per graph.** Loading another model's knowledge is refused unless you pass `--replace`.
+
+**Result** (qwen3:8b knowledge, Lectures 5-7):
+
+| Nodes | | Edges | |
+|---|---|---|---|
+| Source | 3 | MENTIONED_IN | 2,165 |
+| Chunk | 131 | RELATED_TO | 573 |
+| Concept | 215 | PART_OF | 470 |
+| Fact | 1,021 | ABOUT | 2,484 |
+
+The first load, including bge-m3 embeddings for 346 nodes, takes 27 s. A reload takes 1.5 s and changes nothing.
+
+**Facts are linked to concepts by text.** D2's extractor left the `concepts` list of every fact empty (0 of 1,021), so the loader links a fact to each concept from the same chunk whose name or alias appears in the statement as whole words, longest match first. 1,009 facts get at least one `ABOUT` edge, 2.4 on average. The links are only as precise as D2's concepts, so generic ones (`algorithm`, `answer`) get linked as well. Each fact records `linked_by: text` or `model`.
+
+**Demo:** [`docs/d3-demo.cypher`](docs/d3-demo.cypher) walks from `AVL tree` to the 21 Lecture 6 passages that mention it, with timestamps. It then follows `uses` edges one hop and lists concepts taught in more than one lecture. `domaingraph graph trace` runs the same walk from the command line.
 
 ## Development
 
