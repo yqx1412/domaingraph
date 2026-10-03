@@ -79,12 +79,33 @@ def test_hybrid_rerank_prefers_passages_with_query_concepts():
     g = _graph()
     # Vector puts a:0 first; it shares no concept with the query, a:2 has radix sort.
     vec = _FixedVector([("a:0", 0.9), ("a:2", 0.8), ("a:3", 0.7)])
-    h = HybridSearch(vec, g, bonus=0.0)
+    h = HybridSearch(vec, g, fusion="rrf", bonus=0.0)
     plain = [c for c, _ in h.search("radix sort", None, 3)]
     assert plain[0] == "a:2"  # first in graph, second in vector: RRF already agrees
-    h_vec_only = HybridSearch(_FixedVector([("a:0", 0.9), ("a:3", 0.8)]), _graph(), bonus=0.05)
+    h_vec_only = HybridSearch(
+        _FixedVector([("a:0", 0.9), ("a:3", 0.8)]), _graph(), fusion="rrf", bonus=0.05
+    )
     ranked = [c for c, _ in h_vec_only.search("radix sort", None, 4)]
     assert ranked[0] == "a:2"
+
+
+def test_hybrid_rerank_only_reorders_vector_candidates():
+    g = _graph()
+    vec = _FixedVector([("a:0", 0.80), ("a:3", 0.79), ("a:1", 0.70)])
+    ranked = HybridSearch(vec, g, bonus=0.05).search("radix sort", None, 5)
+    # a:2 has the best graph score but vector never returned it, so it stays out.
+    assert [c for c, _ in ranked] == ["a:3", "a:0", "a:1"]
+    # a:3 (stable sort, 1 hop) overtakes a:0 (no concept). a:1 has the best graph score of
+    # the three (counting sort, 1 hop, 2 facts) but is too far behind on cosine.
+    gs = g.score(g.seeds("radix sort", None))
+    best = max(gs["a:1"], gs["a:3"])
+    assert best == gs["a:1"]
+    assert ranked[0][1] == pytest.approx(0.79 + 0.05 * gs["a:3"] / best)
+    assert [c for c, _ in HybridSearch(vec, g, bonus=0.0).search("x", None, 5)] == [
+        "a:0",
+        "a:3",
+        "a:1",
+    ]
 
 
 def test_bm25_prefers_rare_terms():

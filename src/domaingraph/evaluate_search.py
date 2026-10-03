@@ -15,6 +15,7 @@ Differences between two modes come with a paired bootstrap 95% interval over que
 
 from __future__ import annotations
 
+import hashlib
 import random
 from collections import defaultdict
 from collections.abc import Callable, Sequence
@@ -104,6 +105,12 @@ def by_type(results: Sequence[QueryResult]) -> dict[str, list[QueryResult]]:
     for r in results:
         out[r.query.type].append(r)
     return dict(out)
+
+
+def split_of(query_id: str) -> str:
+    """A fixed half/half split by hash of the id: ``dev`` for tuning, ``test`` for reporting
+    anything tuned. Defined before any variant was tried."""
+    return "dev" if hashlib.sha1(query_id.encode()).digest()[0] % 2 == 0 else "test"
 
 
 def paired_bootstrap(

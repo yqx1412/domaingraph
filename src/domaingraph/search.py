@@ -7,13 +7,17 @@ labels:
 * **graph**: no passage embeddings at all. The query is matched to concepts, by name or
   alias in its text and by the ``concept_embedding`` index, and passages are ranked by the
   concepts they mention (see :class:`GraphSearch`).
-* **hybrid**: reciprocal rank fusion of vector and graph, then a re-rank of the fused top
-  candidates that adds a bonus for the concepts a passage shares with the query.
+* **hybrid**: vector's top 50 passages, re-scored with the graph: ``cosine + 0.05 x graph
+  score / best graph score among the 50``. The graph reorders, it never adds passages.
+* **hybrid-rrf**: reciprocal rank fusion of vector and graph, then a small re-rank bonus for
+  the query's concepts. This was the hybrid fixed before any scoring; it lost to vector.
 * **bm25**: plain keyword search over the passage text, as a reference point. It is not one
   of the roadmap's three modes; it shows what the embeddings and the graph add over words.
 
-All weights below were fixed before the query set was scored, so the query set is a test
-set, not a tuning set.
+The first version of every weight was committed before the query set was scored. The query
+set is split by a hash of the query id into ``dev`` and ``test`` halves
+(:func:`~domaingraph.evaluate_search.split_of`). The re-rank hybrid and its 0.05 bonus were
+chosen on ``dev`` only, so ``test`` is the honest number for it.
 """
 
 from __future__ import annotations
@@ -198,10 +202,14 @@ def rrf(rankings: Sequence[Ranking], k: int = 60, weights: Sequence[float] | Non
 
 
 class HybridSearch:
-    """Fuse vector and graph with RRF over their top ``pool`` passages, then re-rank the
-    fused top ``rerank`` by adding ``bonus`` times the share of the query's seed concepts
-    (by seed weight) that the passage mentions. RRF only knows ranks; the re-rank uses what
-    the graph knows about each candidate."""
+    """Combine vector and graph, in one of two ways:
+
+    * ``fusion="rrf"``: reciprocal rank fusion of both top ``pool`` lists (``weights`` per
+      list), then a re-rank of the fused top ``rerank`` that adds ``bonus`` times the share
+      of the query's seed concepts (by seed weight) the passage mentions.
+    * ``fusion="rerank"``: keep vector's top ``pool`` candidates and re-score each as
+      ``cosine + bonus * graph score / best graph score among them``. The graph can only
+      reorder what vector found, never add passages."""
 
     name = "hybrid"
 
@@ -213,19 +221,28 @@ class HybridSearch:
         pool: int = 50,
         rrf_k: int = 60,
         rerank: int = 20,
-        bonus: float = 0.01,
+        bonus: float = 0.05,
+        weights: tuple[float, float] = (1.0, 1.0),
+        fusion: str = "rerank",
     ) -> None:
         self.vector, self.graph = vector, graph
         self.pool, self.rrf_k, self.rerank, self.bonus = pool, rrf_k, rerank, bonus
+        self.weights, self.fusion = weights, fusion
 
     def search(self, query: str, vec: list[float] | None, k: int) -> Ranking:
         seeds = self.graph.seeds(query, vec)
         v = self.vector.search(query, vec, self.pool)
+        gscores = self.graph.score(seeds)
+        if self.fusion == "rerank":
+            best = max((gscores.get(cid, 0.0) for cid, _ in v), default=0.0) or 1.0
+            out = [(cid, s + self.bonus * gscores.get(cid, 0.0) / best) for cid, s in v]
+            out.sort(key=lambda kv: -kv[1])
+            return out[:k]
         ranked_graph = sorted(
-            self.graph.score(seeds).items(),
+            gscores.items(),
             key=lambda kv: (-kv[1], self.graph.order.get(kv[0], 0)),
         )[: self.pool]
-        fused = rrf([v, ranked_graph], self.rrf_k)
+        fused = rrf([v, ranked_graph], self.rrf_k, self.weights)
         total = sum(seeds.values())
         if total and self.bonus:
             head = []

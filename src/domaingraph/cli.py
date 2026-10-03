@@ -18,7 +18,7 @@ DEFAULT_OUT = Path("data")
 DEFAULT_EXTRACT_MODEL = "qwen3:14b"
 DEFAULT_MERGE_THRESHOLD = 0.85
 DEFAULT_GRAPH_MODEL = "qwen3:8b"
-SEARCH_MODES = ("bm25", "vector", "graph", "hybrid")
+SEARCH_MODES = ("bm25", "vector", "graph", "hybrid", "hybrid-rrf")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -123,6 +123,9 @@ def build_parser() -> argparse.ArgumentParser:
     es.add_argument("--embed-model", default="bge-m3")
     es.add_argument("--report", type=Path, default=None, help="Write a Markdown report here")
     es.add_argument("--details", action="store_true", help="Print each query's first hit")
+    es.add_argument(
+        "--split", default="all", choices=["all", "dev", "test"], help="Score one half only"
+    )
     return p
 
 
@@ -684,12 +687,16 @@ def _searchers(store, out: Path, modes) -> dict:
     if "bm25" in modes:
         chunks = [(c.id, c.text) for s in list_sources(out) for c in load_source(out, s.id)[1]]
         built["bm25"] = BM25Search(chunks)
-    if {"vector", "hybrid"} & set(modes):
+    if {"vector", "hybrid", "hybrid-rrf"} & set(modes):
         built["vector"] = VectorSearch(store)
-    if {"graph", "hybrid"} & set(modes):
+    if {"graph", "hybrid", "hybrid-rrf"} & set(modes):
         built["graph"] = GraphSearch(store)
     if "hybrid" in modes:
         built["hybrid"] = HybridSearch(built["vector"], built["graph"])
+    if "hybrid-rrf" in modes:
+        built["hybrid-rrf"] = HybridSearch(
+            built["vector"], built["graph"], fusion="rrf", bonus=0.01
+        )
     return {m: built[m] for m in modes}
 
 
@@ -736,6 +743,7 @@ def _eval_search(args: argparse.Namespace, parser) -> int:
         by_type,
         load_queries,
         paired_bootstrap,
+        split_of,
         summarize,
     )
     from domaingraph.graph import GraphConfig, GraphStore
@@ -751,6 +759,8 @@ def _eval_search(args: argparse.Namespace, parser) -> int:
         for c in load_source(args.out, s.id)[1]:
             by_pos[(s.id, c.index)] = c.id
     queries = load_queries(args.queries, lambda sid, i: by_pos.get((sid, i)))
+    if args.split != "all":
+        queries = [q for q in queries if split_of(q.id) == args.split]
 
     with GraphStore(GraphConfig.from_env()) as store:
         _check_embed_model(store, args.embed_model)
@@ -767,7 +777,7 @@ def _eval_search(args: argparse.Namespace, parser) -> int:
     cols = list(METRICS)
     type_counts = ", ".join(f"{t} {len(r)}" for t, r in sorted(by_type(results[modes[0]]).items()))
     lines = [
-        f"Queries: {len(queries)} ({type_counts})",
+        f"Queries: {len(queries)}, split {args.split} ({type_counts})",
         "",
     ]
     lines += ["| Mode | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
