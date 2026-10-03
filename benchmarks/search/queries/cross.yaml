@@ -1,0 +1,100 @@
+sources:
+  lecture5: 1c28a3b4720dda55
+  lecture6: 9ef0cbfe913412e8
+  lecture7: 9ec4d790bec6602e
+queries:
+  - id: x-01
+    query: "How do AVL trees fix the height problem of plain BSTs?"
+    type: cross
+    relevant:
+      lecture5: [41, 42]
+      lecture6: [12, 20]
+    answer: "A plain BST can degenerate into a path with height h = n, so operations cost O(n). AVL trees keep the left and right subtree heights within one, forcing h to stay O(log n)."
+
+  - id: x-02
+    query: "Why do binary search tree operations run in order h time and why is that a problem?"
+    type: cross
+    relevant:
+      lecture5: [22, 41]
+      lecture6: [2, 3]
+    answer: "Insert, find, and successor/predecessor each follow one root-to-leaf path, so they take O(h) time. The problem is that h can be as large as n for an unbalanced tree."
+
+  - id: x-03
+    query: "What makes the ordering rule of a search tree stronger than a heap's rule?"
+    type: cross
+    relevant:
+      lecture5: [16, 18]
+      lecture6: [1]
+    answer: "In a BST every node in the left subtree is <= the node and every node in the right subtree is >=, applying to all descendants. A heap only constrains the root relative to its children, which is a much weaker invariant."
+
+  - id: x-04
+    query: "Why can't a min-heap do the runway k-minute check quickly but a BST can?"
+    type: cross
+    relevant:
+      lecture5: [11, 12, 22]
+      lecture6: [1]
+    answer: "A min-heap's invariant only guarantees the root is the minimum, so finding neighbors within k of a time takes O(n). A BST's full ordering lets you do the k-minute check along the O(h) insertion path."
+
+  - id: x-05
+    query: "How can you sort numbers using a balanced search tree and how fast is it?"
+    type: cross
+    relevant:
+      lecture6: [39, 40]
+      lecture5: [27]
+    answer: "Insert all n items into an AVL tree, each insert costing O(log n), then do an in-order traversal in linear time. Total is O(n log n)."
+
+  - id: x-06
+    query: "Why is any sorting method that only compares elements stuck at n log n?"
+    type: cross
+    relevant:
+      lecture7: [16, 18, 22]
+      lecture6: [40]
+    answer: "A comparison sort is a binary decision tree that must have at least n! leaves, one per possible permutation, so its height is at least log(n!) = omega(n log n). AVL sort, heap sort, and merge sort all meet this bound."
+
+  - id: x-07
+    query: "What do heaps, merge sort, and AVL trees have in common for sorting, and how do they differ?"
+    type: cross
+    relevant:
+      lecture6: [40, 42]
+      lecture7: [16]
+    answer: "All three sort in O(n log n), which is optimal in the comparison model. Heaps give insert and delete-min in place; AVL trees also support successor/predecessor but use extra pointer space."
+
+  - id: x-08
+    query: "Why does binary search needing log n comparisons mean a search tree is a good choice?"
+    type: cross
+    relevant:
+      lecture7: [14, 15]
+      lecture6: [4]
+    answer: "In the comparison model search needs omega(log n) comparisons because the decision tree has at least n leaves. A balanced BST achieves exactly O(log n), so it is optimal."
+
+  - id: x-09
+    query: "How does keeping subtree heights nearly equal guarantee logarithmic height?"
+    type: cross
+    relevant:
+      lecture6: [16, 20]
+      lecture5: [42]
+    answer: "The fewest nodes in an AVL tree of height h follows a Fibonacci-like recurrence, so n grows like phi^h; inverting gives h < 1.44 log n. This avoids the degenerate list-shaped tree a plain BST can become."
+
+  - id: x-10
+    query: "If comparing is the only thing merge sort and heap sort do, how can counting sort beat n log n?"
+    type: cross
+    relevant:
+      lecture7: [2, 27, 37]
+      lecture6: [40]
+    answer: "Merge sort, heap sort, and BSTs only compare items, so they are bound by n log n. Counting sort leaves the comparison model, treats keys as integers in a range, and runs in O(n + k)."
+
+  - id: x-11
+    query: "Why do we store the height at each node and how is that like the subtree-size trick from the BST lecture?"
+    type: cross
+    relevant:
+      lecture6: [7, 8]
+      lecture5: [31, 32]
+    answer: "A node's height is one plus the max of its children's heights, a local rule maintainable with constant overhead per operation. This is the same data-structure augmentation used to keep subtree sizes in the BST lecture."
+
+  - id: x-12
+    query: "What tree rotation lets AVL insert rebalance, and does it still return items in sorted order?"
+    type: cross
+    relevant:
+      lecture6: [28, 29]
+      lecture5: [17, 18]
+    answer: "A rotation swaps which of two nodes is higher in a constant number of pointer changes. It preserves the BST ordering invariant, so an in-order traversal still yields the same sorted sequence."

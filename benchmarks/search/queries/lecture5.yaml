@@ -1,0 +1,153 @@
+source_id: 1c28a3b4720dda55
+lecture: lecture5
+queries:
+  - id: l5-01
+    query: "What is the BST invariant for keys in the left and right subtrees?"
+    type: definition
+    relevant: [17, 18]
+    answer: "For any node x, keys in its left subtree are less than or equal to key of x, and keys in its right subtree are greater than or equal to key of x."
+  - id: l5-02
+    query: "What is a binary search tree made of as a data structure?"
+    type: definition
+    relevant: [16, 17]
+    answer: "It is an actual tree of nodes, each holding a key and parent, left-child, and right-child pointers."
+  - id: l5-03
+    query: "What does rank of t mean?"
+    type: definition
+    relevant: [29, 30]
+    answer: "Rank t is how many planes are scheduled to land at times less than or equal to t."
+  - id: l5-04
+    query: "What is the runway reservation problem the lecture uses as motivation?"
+    type: definition
+    relevant: [1, 2]
+    answer: "A single-runway airport scheduling system that reserves future landing times, adding a time only if no other landing is within k minutes."
+  - id: l5-05
+    query: "What does it mean to augment a binary search tree?"
+    type: definition
+    relevant: [28, 29]
+    answer: "Augmenting means storing extra data in each node so the tree can answer more operations than the plain pointers allow."
+  - id: l5-06
+    query: "What is a multiset in the context of a BST?"
+    type: definition
+    relevant: [25]
+    answer: "A multiset is a set that allows duplicate elements, so a BST storing one needs a way to tell apart two nodes with the same key."
+  - id: l5-07
+    query: "How long does inserting into a binary search tree take?"
+    type: fact
+    relevant: [22]
+    answer: "Insertion, with or without the check, takes order h time where h is the height of the tree."
+  - id: l5-08
+    query: "What time complexity does the system need for all its operations?"
+    type: fact
+    relevant: [3, 4]
+    answer: "All operations should run in order log n time, where n is the size of the set."
+  - id: l5-09
+    query: "Why does inserting into a sorted array fail the efficiency requirement?"
+    type: fact
+    relevant: [10]
+    answer: "The actual insertion requires shifting elements, which can take order n time."
+  - id: l5-10
+    query: "What is the subtree size of the node with key 49 in the augmented example?"
+    type: fact
+    relevant: [31, 32]
+    answer: "The subtree size at node 49 is 5, counting everything underneath it."
+  - id: l5-11
+    query: "What is the worst-case height of an unbalanced binary search tree?"
+    type: fact
+    relevant: [41, 42]
+    answer: "The height h can be order n, because inserting sorted values makes the tree look like a list."
+  - id: l5-12
+    query: "How fast can you find the minimum in a min heap versus a BST?"
+    type: fact
+    relevant: [27]
+    answer: "In a min heap find-min is constant time by returning the root, while in a BST it is order h."
+  - id: l5-13
+    query: "How does a BST find the next larger key?"
+    type: procedure
+    relevant: [28]
+    answer: "You find the next larger value, done in order h time; for example the next larger than 46 is 49."
+  - id: l5-14
+    query: "How do you insert a new key into a binary search tree?"
+    type: procedure
+    relevant: [19, 20]
+    answer: "Compare the new key to each node, going right if greater and left if smaller, then attach it as a child at the empty spot."
+  - id: l5-15
+    query: "How do you find the smallest value stored in a BST?"
+    type: procedure
+    relevant: [27]
+    answer: "Keep going to the left until you hit a leaf."
+  - id: l5-16
+    query: "How is the k-minute check performed during insertion?"
+    type: procedure
+    relevant: [20, 21]
+    answer: "As you binary-search down to the insertion point you compare the new time against each node, and if any is within k minutes you fail and do not insert."
+  - id: l5-17
+    query: "How do insert and delete update the stored subtree-size numbers?"
+    type: procedure
+    relevant: [32, 33]
+    answer: "Follow the insertion path and increment each node you pass by one, assigning the new leaf a subtree size of 1 (and analogously decrement for delete)."
+  - id: l5-18
+    query: "How do you compute rank t using the subtree sizes?"
+    type: procedure
+    relevant: [38, 39]
+    answer: "Walk down toward t and, whenever you go right past a node, add one for that node plus its left subtree size, summing all nodes known to be smaller."
+  - id: l5-19
+    query: "Why does a plain sorted array not solve the problem even though it supports binary search?"
+    type: relation
+    relevant: [10, 15]
+    answer: "Binary search finds the insertion point fast, but inserting still needs shifting that takes order n time."
+  - id: l5-20
+    query: "How is the BST invariant stronger than the heap invariant?"
+    type: relation
+    relevant: [16, 18]
+    answer: "The BST orders every node against its whole subtree, whereas the heap invariant only relates a node to its children through the min at the root."
+  - id: l5-21
+    query: "Why can't a min heap do the k-minute check quickly?"
+    type: relation
+    relevant: [11, 12]
+    answer: "A heap's weak invariant only exposes the min at the root, so checking for an element within k of t takes order n time."
+  - id: l5-22
+    query: "Why is a sorted linked list not enough even though insertion is cheap?"
+    type: relation
+    relevant: [10, 11]
+    answer: "A list has no random access, so you cannot do binary search to find the insertion point."
+  - id: l5-23
+    query: "Why does the BST sit between a sorted list and a sorted array?"
+    type: relation
+    relevant: [21, 22]
+    answer: "It behaves like a sorted array for searching but uses pointers like a list so insertion is just attaching a node once the spot is found."
+  - id: l5-24
+    query: "Why must the tree be balanced for the operations to hit order log n?"
+    type: relation
+    relevant: [42]
+    answer: "Operations cost order h, so only a balanced tree keeps h at order log n instead of order n."
+  - id: l5-25
+    query: "How do I keep track of how many things sit below each node?"
+    type: paraphrase
+    relevant: [31, 32]
+    answer: "Store a number at each node equal to its subtree size, counting the node itself plus everything underneath."
+  - id: l5-26
+    query: "I want to count how many bookings come at or before a certain time, how?"
+    type: paraphrase
+    relevant: [36, 39]
+    answer: "Compute rank t by walking down and adding each node and its left subtree whenever you turn right."
+  - id: l5-27
+    query: "If I just dump already-ordered numbers in one by one, why does the shape go wrong?"
+    type: paraphrase
+    relevant: [41, 42]
+    answer: "Inserting a sorted sequence makes every node a single right child, so the tree degenerates into a list."
+  - id: l5-28
+    query: "How do I stop two planes from being booked too close together?"
+    type: paraphrase
+    relevant: [2, 20]
+    answer: "Only add a landing time if no other landing is scheduled within k minutes, checked as you search for the insertion spot."
+  - id: l5-29
+    query: "What slows things down if I just dump landings into a plain unordered bucket?"
+    type: paraphrase
+    relevant: [6, 7]
+    answer: "With an unsorted array almost everything is linear; the k-minute check must scan the whole array in order n time."
+  - id: l5-30
+    query: "How do I find the biggest value in the tree?"
+    type: paraphrase
+    relevant: [27]
+    answer: "Keep going to the right until you reach a leaf."
