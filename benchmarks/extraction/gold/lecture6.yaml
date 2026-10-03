@@ -1,0 +1,173 @@
+source_id: 9ef0cbfe913412e8
+title: "MIT 6.006 Fall 2011, Lecture 6: AVL Trees, AVL Sort"
+concepts:
+  - name: binary search tree
+    aliases: [BST]
+    type: data_structure
+    core: true
+    chunks: [0, 1, 2, 24, 27, 28, 42]
+  - name: AVL tree
+    aliases: []
+    type: data_structure
+    core: true
+    chunks: [5, 8, 9, 10, 12, 15, 24, 30, 39, 42]
+  - name: balanced binary search tree
+    aliases: [balanced search tree, balanced tree, balanced BST]
+    type: data_structure
+    core: true
+    chunks: [4, 10, 12, 42]
+  - name: BST property
+    aliases: [search property, BST order property]
+    type: property
+    core: true
+    chunks: [0, 1, 28, 29]
+  - name: height
+    aliases: [height of a tree, height of a node]
+    type: property
+    core: true
+    chunks: [2, 3, 4, 5, 6, 7, 8, 9, 11, 37, 38]
+  - name: depth
+    aliases: []
+    type: property
+    core: false
+    chunks: [6, 9]
+  - name: AVL property
+    aliases: [AVL balance condition, AVL invariant]
+    type: property
+    core: true
+    chunks: [10, 11, 12, 24, 25, 33, 34, 35, 36, 39]
+  - name: in-order traversal
+    aliases: []
+    type: operation
+    core: true
+    chunks: [1, 2, 29, 40]
+  - name: insert
+    aliases: [BST insertion, AVL insert]
+    type: operation
+    core: true
+    chunks: [2, 24, 25, 26, 33, 40]
+  - name: delete
+    aliases: []
+    type: operation
+    core: false
+    chunks: [2, 24, 40]
+  - name: successor
+    aliases: [next larger element, find next larger]
+    type: operation
+    core: false
+    chunks: [2, 3, 40, 41]
+  - name: predecessor
+    aliases: [next smaller element, find next smaller]
+    type: operation
+    core: false
+    chunks: [2, 3, 40, 41]
+  - name: rotation
+    aliases: []
+    type: operation
+    core: true
+    chunks: [27, 28, 29, 30, 31, 32, 36, 37, 39]
+  - name: left rotate
+    aliases: [left rotation]
+    type: operation
+    core: false
+    chunks: [27, 28, 29, 39]
+  - name: right rotate
+    aliases: [right rotation]
+    type: operation
+    core: false
+    chunks: [29, 30, 31, 32, 33, 36, 37, 39]
+  - name: double rotation
+    aliases: [two rotations]
+    type: operation
+    core: true
+    chunks: [31, 32, 33, 39]
+  - name: data structure augmentation
+    aliases: []
+    type: technique
+    core: false
+    chunks: [7, 8]
+  - name: recurrence
+    aliases: [recursive formula]
+    type: technique
+    core: true
+    chunks: [17, 18, 19, 21, 22, 23]
+  - name: Fibonacci numbers
+    aliases: [Fibonacci sequence]
+    type: other
+    core: false
+    chunks: [19, 20, 21, 22]
+  - name: golden ratio
+    aliases: [phi]
+    type: other
+    core: false
+    chunks: [20, 21]
+  - name: logarithmic height
+    aliases: [order log n, log n height]
+    type: complexity
+    core: true
+    chunks: [3, 4, 5, 10, 12, 21, 23, 24, 40]
+  - name: AVL sort
+    aliases: []
+    type: algorithm
+    core: true
+    chunks: [39, 40]
+  - name: sorting
+    aliases: [sort]
+    type: problem
+    core: true
+    chunks: [0, 39, 40]
+  - name: heap
+    aliases: []
+    type: data_structure
+    core: false
+    chunks: [40, 42]
+  - name: merge sort
+    aliases: []
+    type: algorithm
+    core: false
+    chunks: [40]
+  - name: priority queue
+    aliases: []
+    type: other
+    core: false
+    chunks: [41, 42]
+  - name: abstract data type
+    aliases: [ADT]
+    type: other
+    core: false
+    chunks: [41]
+  - name: delete min
+    aliases: []
+    type: operation
+    core: false
+    chunks: [40, 41]
+relations:
+  - {subject: AVL tree, predicate: is_a, object: binary search tree, chunks: [5, 42]}
+  - {subject: AVL tree, predicate: is_a, object: balanced binary search tree, chunks: [12, 42]}
+  - {subject: binary search tree, predicate: has_property, object: BST property, chunks: [0, 1]}
+  - {subject: binary search tree, predicate: has_property, object: height, chunks: [2, 3]}
+  - {subject: AVL tree, predicate: has_property, object: AVL property, chunks: [10, 11, 12]}
+  - {subject: AVL property, predicate: uses, object: height, chunks: [10, 11, 35]}
+  - {subject: balanced binary search tree, predicate: has_property, object: logarithmic height, chunks: [4, 12]}
+  - {subject: AVL tree, predicate: has_property, object: logarithmic height, chunks: [12, 24, 40]}
+  - {subject: in-order traversal, predicate: uses, object: binary search tree, chunks: [1, 2]}
+  - {subject: insert, predicate: uses, object: BST property, chunks: [25]}
+  - {subject: insert, predicate: uses, object: rotation, chunks: [30, 33]}
+  - {subject: insert, predicate: uses, object: double rotation, chunks: [32, 33]}
+  - {subject: double rotation, predicate: uses, object: rotation, chunks: [33]}
+  - {subject: left rotate, predicate: is_a, object: rotation, chunks: [27, 28]}
+  - {subject: right rotate, predicate: is_a, object: rotation, chunks: [29, 30]}
+  - {subject: AVL tree, predicate: uses, object: data structure augmentation, chunks: [7, 8]}
+  - {subject: AVL tree, predicate: uses, object: height, chunks: [8, 9]}
+  - {subject: AVL tree, predicate: uses, object: rotation, chunks: [24, 39]}
+  - {subject: recurrence, predicate: uses, object: Fibonacci numbers, chunks: [19]}
+  - {subject: Fibonacci numbers, predicate: has_property, object: golden ratio, chunks: [20, 21]}
+  - {subject: AVL sort, predicate: uses, object: AVL tree, chunks: [39, 40]}
+  - {subject: AVL sort, predicate: uses, object: in-order traversal, chunks: [40]}
+  - {subject: AVL sort, predicate: uses, object: insert, chunks: [40]}
+  - {subject: AVL sort, predicate: solves, object: sorting, chunks: [39, 40]}
+  - {subject: merge sort, predicate: solves, object: sorting, chunks: [40]}
+  - {subject: heap, predicate: solves, object: priority queue, chunks: [41, 42]}
+  - {subject: AVL tree, predicate: solves, object: priority queue, chunks: [42]}
+  - {subject: priority queue, predicate: is_a, object: abstract data type, chunks: [41]}
+  - {subject: AVL tree, predicate: contrasts_with, object: heap, chunks: [40, 42]}

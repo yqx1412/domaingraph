@@ -1,0 +1,155 @@
+source_id: 9ec4d790bec6602e
+title: "MIT 6.006 Fall 2011, Lecture 7: Counting Sort, Radix Sort, Lower Bounds for Sorting"
+concepts:
+  - name: model of computation
+    aliases: []
+    type: other
+    core: true
+    chunks: [0, 1, 27]
+  - name: comparison model
+    aliases: []
+    type: other
+    core: true
+    chunks: [0, 1, 2, 3, 11, 15, 16, 26, 27]
+  - name: RAM model
+    aliases: [random access machine]
+    type: other
+    core: true
+    chunks: [3, 27, 29]
+  - name: integer sorting
+    aliases: []
+    type: problem
+    core: true
+    chunks: [27, 28, 29, 30]
+  - name: lower bound
+    aliases: []
+    type: technique
+    core: true
+    chunks: [0, 1, 3, 11, 13, 14, 24, 25, 26]
+  - name: decision tree
+    aliases: [comparison tree]
+    type: technique
+    core: true
+    chunks: [4, 8, 10, 11, 13, 16, 18, 24]
+  - name: binary tree
+    aliases: []
+    type: data_structure
+    core: false
+    chunks: [12, 13, 14, 16, 18, 24]
+  - name: height of a tree
+    aliases: [tree height]
+    type: property
+    core: true
+    chunks: [10, 11, 13, 14, 16, 24]
+  - name: worst case running time
+    aliases: []
+    type: complexity
+    core: true
+    chunks: [0, 3, 10, 11, 14]
+  - name: sorting
+    aliases: []
+    type: problem
+    core: true
+    chunks: [0, 1, 15, 16, 18, 23, 25, 26]
+  - name: searching
+    aliases: []
+    type: problem
+    core: true
+    chunks: [1, 11, 13, 25, 26]
+  - name: binary search
+    aliases: []
+    type: algorithm
+    core: true
+    chunks: [1, 4, 5, 6, 7, 9, 10, 14, 15]
+  - name: merge sort
+    aliases: []
+    type: algorithm
+    core: false
+    chunks: [1, 2]
+  - name: binary search tree
+    aliases: [BST]
+    type: data_structure
+    core: false
+    chunks: [2, 3, 12, 15, 16]
+  - name: AVL tree
+    aliases: []
+    type: data_structure
+    core: false
+    chunks: [3, 12]
+  - name: heap
+    aliases: []
+    type: data_structure
+    core: false
+    chunks: [2]
+  - name: abstract data type
+    aliases: [ADT]
+    type: other
+    core: false
+    chunks: [1, 2]
+  - name: permutation
+    aliases: []
+    type: other
+    core: true
+    chunks: [18, 19]
+  - name: factorial
+    aliases: [n factorial]
+    type: other
+    core: false
+    chunks: [18, 19, 20, 23]
+  - name: Stirling's approximation
+    aliases: [Stirling's formula]
+    type: technique
+    core: false
+    chunks: [19, 23, 24]
+  - name: counting sort
+    aliases: []
+    type: algorithm
+    core: true
+    chunks: [30, 31, 32, 33, 34, 35, 36, 37, 38, 41]
+  - name: radix sort
+    aliases: []
+    type: algorithm
+    core: true
+    chunks: [38, 39, 40, 41, 42, 43, 44]
+  - name: stable sort
+    aliases: [stability, stable sorting]
+    type: property
+    core: false
+    chunks: [33, 34, 41]
+  - name: key
+    aliases: [key function]
+    type: other
+    core: false
+    chunks: [28, 33, 36, 41, 42]
+  - name: machine word
+    aliases: []
+    type: other
+    core: false
+    chunks: [28, 29]
+relations:
+  - {subject: comparison model, predicate: is_a, object: model of computation, chunks: [0, 1]}
+  - {subject: RAM model, predicate: is_a, object: model of computation, chunks: [27]}
+  - {subject: binary search, predicate: solves, object: searching, chunks: [1, 15]}
+  - {subject: merge sort, predicate: solves, object: sorting, chunks: [1]}
+  - {subject: counting sort, predicate: solves, object: integer sorting, chunks: [30, 31]}
+  - {subject: radix sort, predicate: solves, object: integer sorting, chunks: [38, 39]}
+  - {subject: integer sorting, predicate: is_a, object: sorting, chunks: [27]}
+  - {subject: binary search, predicate: uses, object: comparison model, chunks: [1, 4, 15]}
+  - {subject: merge sort, predicate: uses, object: comparison model, chunks: [2]}
+  - {subject: binary search tree, predicate: uses, object: comparison model, chunks: [2, 15]}
+  - {subject: heap, predicate: uses, object: comparison model, chunks: [2]}
+  - {subject: counting sort, predicate: uses, object: RAM model, chunks: [27, 29, 30]}
+  - {subject: radix sort, predicate: uses, object: RAM model, chunks: [27, 29]}
+  - {subject: radix sort, predicate: uses, object: counting sort, chunks: [38, 41]}
+  - {subject: counting sort, predicate: has_property, object: stable sort, chunks: [33, 34]}
+  - {subject: radix sort, predicate: uses, object: stable sort, chunks: [41]}
+  - {subject: decision tree, predicate: is_a, object: binary tree, chunks: [12, 13, 16]}
+  - {subject: decision tree, predicate: has_property, object: height of a tree, chunks: [10, 11, 14]}
+  - {subject: lower bound, predicate: uses, object: decision tree, chunks: [4, 11, 24]}
+  - {subject: lower bound, predicate: uses, object: permutation, chunks: [18, 19]}
+  - {subject: lower bound, predicate: uses, object: Stirling's approximation, chunks: [23, 24]}
+  - {subject: binary search tree, predicate: solves, object: searching, chunks: [15, 16]}
+  - {subject: AVL tree, predicate: is_a, object: binary search tree, chunks: [3, 12]}
+  - {subject: comparison model, predicate: contrasts_with, object: RAM model, chunks: [27]}
+  - {subject: integer sorting, predicate: contrasts_with, object: comparison model, chunks: [27]}
+  - {subject: machine word, predicate: part_of, object: RAM model, chunks: [29]}
