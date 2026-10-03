@@ -17,6 +17,7 @@ from domaingraph.pipeline import ingest, list_sources, load_source
 DEFAULT_OUT = Path("data")
 DEFAULT_EXTRACT_MODEL = "qwen3:14b"
 DEFAULT_MERGE_THRESHOLD = 0.85
+DEFAULT_GRAPH_MODEL = "qwen3:8b"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,6 +85,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated merge thresholds to compare instead (e.g. 0.8,0.85,0.9,1.01)",
     )
     _merge_args(ev)
+
+    gr = sub.add_parser("graph", help="Neo4j graph store (D3)")
+    gsub = gr.add_subparsers(dest="graph_command")
+    gl = gsub.add_parser("load", help="Load a knowledge file and its sources into Neo4j")
+    gl.add_argument(
+        "--model",
+        default=DEFAULT_GRAPH_MODEL,
+        help=f"Which extraction to load (default: {DEFAULT_GRAPH_MODEL}, the best in D2)",
+    )
+    gl.add_argument("--domain", default="algorithms", help="Domain the sources belong to")
+    gl.add_argument("--embed-model", default="bge-m3")
+    gl.add_argument("--no-embed", action="store_true", help="Skip embeddings")
+    gl.add_argument("--replace", action="store_true", help="Replace knowledge from another model")
+    gsub.add_parser("stats", help="Node and edge counts")
+    gt = gsub.add_parser("trace", help="Walk from a concept to its sources and timestamps")
+    gt.add_argument("concept", help="Concept name or alias")
+    gt.add_argument("--relations", type=int, default=10, help="How many relations to show")
+    gs = gsub.add_parser("similar", help="Vector-index search over concepts or chunks")
+    gs.add_argument("text")
+    gs.add_argument("--chunks", action="store_true", help="Search passages, not concepts")
+    gs.add_argument("-k", type=int, default=5)
+    gs.add_argument("--embed-model", default="bge-m3")
+    grs = gsub.add_parser("reset", help="Delete everything in the graph")
+    grs.add_argument("--yes", action="store_true", help="Confirm")
     return p
 
 
@@ -120,6 +145,15 @@ def main(argv: list[str] | None = None) -> int:
                 "eval-extract": _eval_extract,
             }[args.command](args)
         except LLMError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+    if args.command == "graph":
+        from domaingraph.graph import GraphError
+        from domaingraph.llm import LLMError
+
+        try:
+            return _graph(args, parser)
+        except (GraphError, LLMError) as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
     parser.print_help()
@@ -511,4 +545,115 @@ def _sweep(args: argparse.Namespace, golds) -> int:
             rows,
         )
     )
+    return 0
+
+
+# --- D3: graph store -----------------------------------------------------------------------
+
+
+def _graph(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+    from domaingraph.graph import GraphConfig, GraphStore
+
+    if args.graph_command is None:
+        parser.parse_args(["graph", "--help"])
+        return 0
+    with GraphStore(GraphConfig.from_env()) as store:
+        return {
+            "load": _graph_load,
+            "stats": _graph_stats,
+            "trace": _graph_trace,
+            "similar": _graph_similar,
+            "reset": _graph_reset,
+        }[args.graph_command](args, store)
+
+
+def _graph_load(args: argparse.Namespace, store) -> int:
+    from domaingraph.graph import build_rows
+    from domaingraph.llm import OllamaEmbedder
+    from domaingraph.merge import Knowledge
+
+    p = _knowledge_path(args.out, args.model)
+    if not p.is_file():
+        print(f"error: no knowledge file for {args.model}; run extract first", file=sys.stderr)
+        return 1
+    kn = Knowledge.model_validate_json(p.read_text(encoding="utf-8"))
+    known = {s.id for s in list_sources(args.out)}
+    missing = [s for s in kn.sources if s not in known]
+    if missing:
+        print(f"error: knowledge refers to sources not in {args.out}: {missing}", file=sys.stderr)
+        return 1
+    sources = [load_source(args.out, s) for s in kn.sources]
+    rows = build_rows(kn, sources, args.domain)
+    embedder = None if args.no_embed else OllamaEmbedder(args.embed_model)
+    st = store.load(rows, model=kn.model, embedder=embedder, replace=args.replace)
+    print(
+        f"loaded {kn.model} into domain {args.domain!r}: {st.sources} sources, "
+        f"{st.chunks} chunks, {st.concepts} concepts, {st.mentions} mentions, "
+        f"{st.relations} RELATED_TO, {st.part_of} PART_OF, {st.facts} facts; "
+        f"embedded {st.embedded}; removed {st.removed}"
+    )
+    return 0
+
+
+def _graph_stats(args: argparse.Namespace, store) -> int:
+    meta = store.meta()
+    if meta:
+        print(
+            f"model {meta.get('model')}, embeddings {meta.get('embed_model')} "
+            f"({meta.get('dims')} dims), loaded {meta.get('loaded_at')}"
+        )
+    for k, v in store.counts().items():
+        print(f"{k:>18}  {v}")
+    return 0
+
+
+def _graph_trace(args: argparse.Namespace, store) -> int:
+    c = store.find_concept(args.concept)
+    if c is None:
+        print(f"error: no concept named {args.concept!r}", file=sys.stderr)
+        return 1
+    aka = f" (also: {', '.join(c['aliases'])})" if c["aliases"] else ""
+    print(f"{c['name']} [{c['type']}]{aka}")
+    if c["definition"]:
+        print(f"  {c['definition']}")
+    rels = store.neighbours(c["id"])
+    if rels:
+        print(f"\nrelations ({len(rels)}, most-mentioned first):")
+        for r in rels[: args.relations]:
+            arrow = f"-[{r['predicate']}]->" if r["dir"] == "out" else f"<-[{r['predicate']}]-"
+            print(f"  {arrow} {r['other']}  (x{r['n']})")
+        if len(rels) > args.relations:
+            print(f"  ... {len(rels) - args.relations} more")
+    print("\nmentioned in:")
+    current = None
+    for r in store.trace(c["id"]):
+        if r["source"] != current:
+            current = r["source"]
+            print(f"  {current}")
+        said = ", ".join(r["said_as"]) if r["said_as"] else ""
+        print(f"    {r['locator']:>13}  chunk {r['chunk']:>2}  {said}")
+    return 0
+
+
+def _graph_similar(args: argparse.Namespace, store) -> int:
+    from domaingraph.llm import OllamaEmbedder
+
+    meta = store.meta()
+    if meta.get("embed_model") and meta["embed_model"] != args.embed_model:
+        print(f"error: the graph was embedded with {meta['embed_model']}", file=sys.stderr)
+        return 1
+    vec = OllamaEmbedder(args.embed_model).embed([args.text])[0]
+    label = "Chunk" if args.chunks else "Concept"
+    for r in store.similar(vec, label, args.k):
+        where = f"  {r['locator']}" if r["locator"] else ""
+        print(f"{r['score']:.3f}  {r['name']}{where}")
+    return 0
+
+
+def _graph_reset(args: argparse.Namespace, store) -> int:
+    if not args.yes:
+        print("error: this deletes the whole graph; pass --yes to confirm", file=sys.stderr)
+        return 1
+    store.reset()
+    print("graph emptied")
     return 0
