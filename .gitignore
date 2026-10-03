@@ -16,3 +16,6 @@ runs/
 
 # Ingested sources (transcripts, chunks); see `domaingraph --out`
 data/
+
+# Fine-tuned embedding models (D7, ~2 GB each)
+models/

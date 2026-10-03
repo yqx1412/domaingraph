@@ -209,6 +209,29 @@ Black nodes are the 10 lectures. Concept colours: green = data structure, purple
 
 The 7 new lectures were downloaded as audio from MIT OCW's YouTube channel (`data/media/`, git-ignored), transcribed in about 7 minutes total, and extracted with qwen3:8b in 76 minutes. None of their 299 chunks failed. The vault inherits D2's noise: generic concepts like `operation` and `time complexity`, and names the model wrote in snake_case, such as `k_minute_check`.
 
+## D7: fine-tuned embeddings
+
+`uv sync --extra train` adds PyTorch (CUDA 12.8) and sentence-transformers. The scripts are in `benchmarks/finetune/`.
+
+- **Training data:** bge-m3 fine-tuned on 4,203 pairs from the graph: fact -> passage, concept -> passage and concept -> related concept. They come from Lectures 1-4, 8 and 9 only.
+- **Dev:** Lecture 10 picks the checkpoint.
+- **Test:** Lectures 5-7, the D4 query set, which training never sees.
+
+| | base bge-m3 | fine-tuned | diff (95% CI) |
+|---|---|---|---|
+| D4 queries, Lectures 5-7: MRR@10 | 0.582 | 0.564 | -0.018 [-0.069, +0.032] |
+| D4 queries, Lectures 5-7: R@10 | 0.738 | 0.765 | +0.027 [-0.018, +0.072] |
+| D4 queries, all 10 lectures: MRR@10 | 0.548 | 0.520 | -0.029 [-0.083, +0.026] |
+| Dev (Lecture 10 facts): MRR@10 | 0.404 | 0.478 | |
+| NanoBEIR mean nDCG@10 (general search) | 0.604 | 0.605 | |
+
+- **It didn't help on the test questions.** The model learned the training task: dev, which matches a fact statement to its passage, gained 0.07 MRR. But the D4 queries are questions, and the change there is within noise.
+- **Paraphrased questions got worse** (0.52 -> 0.44 MRR, and 0.45 -> 0.30 with all 10 lectures): the tuned model relies more on the lecture's own wording.
+- **General search didn't get worse** on average. Individual sets moved both ways: SciFact +0.055, FEVER -0.047.
+- **The likely fix is question-shaped training data,** such as LLM-generated questions per training passage, plus hard negatives from the same lecture.
+
+Full write-up: [`benchmarks/finetune/results/d7-finetune.md`](benchmarks/finetune/results/d7-finetune.md).
+
 ## Development
 
 ```powershell

@@ -22,6 +22,20 @@ gpu = [
     "nvidia-cublas-cu12>=12.4,<13",
     "nvidia-cudnn-cu12>=9,<10",
 ]
+train = [
+    # D7 fine-tuning. torch comes from the CUDA 12.8 index below: PyPI's Windows wheel is
+    # CPU-only, and the RTX 50 series (sm_120) needs CUDA 12.8 builds.
+    "torch>=2.9,<3",
+    "sentence-transformers[train]>=6.1.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
