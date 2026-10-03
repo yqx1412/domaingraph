@@ -182,6 +182,33 @@ The cited times hold up: radix sort is introduced at 44:02 (chunk 38) and explai
 
 **Done when:** AgentOS's A6 long-term memory runs on DomainGraph instead of SQLite (`agentos run|bench|memory --memory-backend domaingraph`). On the A6 memory benchmark with auto-injection, it passes 22/22 on qwen3:8b and qwen3:14b, against 20/22 with SQLite. The difference is the "boss" vs "manager" task, which keyword search can't match. See `../agentos/benchmarks/results/a6-domaingraph-memory.md`.
 
+## D6: Obsidian export
+
+```powershell
+uv run domaingraph export-obsidian "C:\Users\me\Documents\DomainGraph Vault"
+uv run domaingraph export-obsidian <vault> --min-chunks 2   # only concepts said in 2+ passages
+uv run domaingraph export-obsidian <vault> --prune          # delete notes of vanished concepts
+```
+
+- **`Concepts/<name>.md`**, one note per concept:
+  - **Front matter:** `domain`, `type`, `confidence`, `aliases` (so `[[BST]]` resolves), `mentions`, `sources` and tags (`type/algorithm`, `domain/algorithms`).
+  - **Body:** the definition, then **Related** as `[[links]]` grouped by predicate in both directions (Uses / Used by, Is a / Kinds, ...), **Taught in** with every time range linked to that second of the YouTube video, and **Facts**, each citing its lecture and time.
+- **`Sources/<title>.md`**, one note per lecture: a link to the video, then its concepts in the order they come up.
+- **`.obsidian/graph.json`** colours the graph view by concept type. It's written only if the vault has none, so your own settings win.
+- **Re-running updates notes in place.**
+  - The exporter only writes between `<!-- domaingraph:begin -->` and `<!-- domaingraph:end -->`. Text you add above or below that block, and front matter keys it doesn't own, are kept.
+  - Notes are matched by `domaingraph_id`, not file name, so a renamed or moved note is updated where it is, and links elsewhere follow its new name.
+  - An unchanged note isn't rewritten.
+  - A concept that left the graph keeps its note, marked `domaingraph_status: removed`. `--prune` deletes such notes only when they contain none of your text.
+
+**Demo:** 10 lectures (MIT 6.006 Fall 2011, Lectures 1-10, 8.6 hours of audio) give 600 concepts and 8,789 links. The exporter made 610 notes; the second run left all 610 unchanged.
+
+![Obsidian graph view of the 10-lecture vault](docs/d6-graph-view.png)
+
+Black nodes are the 10 lectures. Concept colours: green = data structure, purple = property, orange = operation, red = complexity, blue = algorithm, teal = technique, yellow = problem. Each lecture's concepts cluster around it, and concepts taught in several lectures sit between the clusters. Examples are `binary search tree` (Lectures 1 and 5-8) and `hash table` (Lectures 1, 2, 5 and 8-10).
+
+The 7 new lectures were downloaded as audio from MIT OCW's YouTube channel (`data/media/`, git-ignored), transcribed in about 7 minutes total, and extracted with qwen3:8b in 76 minutes. None of their 299 chunks failed. The vault inherits D2's noise: generic concepts like `operation` and `time complexity`, and names the model wrote in snake_case, such as `k_minute_check`.
+
 ## Development
 
 ```powershell

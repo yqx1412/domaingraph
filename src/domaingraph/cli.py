@@ -48,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     rt = sub.add_parser("retitle", help="Set a source's title (shown in citations)")
     rt.add_argument("source_id", help="Source id or a unique prefix")
     rt.add_argument("title")
+    rt.add_argument("--url", default=None, help="Where the original lives (e.g. a video URL)")
 
     show = sub.add_parser("show", help="Print a source's chunks")
     show.add_argument("source_id", help="Source id or a unique prefix")
@@ -138,6 +139,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     mc = sub.add_parser("mcp", help="Run the MCP server on stdio (D5)")
     mcp_arguments(mc)
+
+    ob = sub.add_parser("export-obsidian", help="Export the graph to an Obsidian vault (D6)")
+    ob.add_argument("vault", type=Path, help="Vault folder (created if missing)")
+    ob.add_argument(
+        "--min-chunks", type=int, default=1, help="Only concepts mentioned in this many chunks"
+    )
+    ob.add_argument(
+        "--prune",
+        action="store_true",
+        help="Delete notes of concepts no longer in the graph (only if they hold no user text)",
+    )
     return p
 
 
@@ -165,6 +177,23 @@ def main(argv: list[str] | None = None) -> int:
         from domaingraph.mcp_server import run
 
         return run(args)
+    if args.command == "export-obsidian":
+        from domaingraph.graph import GraphConfig, GraphError, GraphStore
+
+        try:
+            with GraphStore(GraphConfig.from_env()) as store:
+                from domaingraph.export import export_vault
+
+                st = export_vault(store, args.vault, min_chunks=args.min_chunks, prune=args.prune)
+        except GraphError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(
+            f"{args.vault}: {st.created} created, {st.updated} updated, {st.unchanged} unchanged, "
+            f"{st.removed} marked removed, {st.deleted} deleted; "
+            f"{st.skipped} concepts below --min-chunks {args.min_chunks}"
+        )
+        return 0
     if args.command == "show":
         return _show(args)
     if args.command == "wer":
@@ -300,6 +329,8 @@ def _retitle(args: argparse.Namespace) -> int:
     source, _ = load_source(args.out, sid)
     old = source.title
     source.title = title
+    if getattr(args, "url", None):
+        source.url = args.url
     path.write_text(source.model_dump_json(indent=2), encoding="utf-8")
     print(f"{sid}: {old!r} -> {title!r} (run `graph load` to update the graph)")
     return 0

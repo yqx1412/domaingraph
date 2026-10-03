@@ -130,6 +130,7 @@ def build_rows(
                 "path": src.path,
                 "duration": src.duration,
                 "pages": src.pages,
+                "url": src.url,
             }
         )
         for ch in chunks:
@@ -440,7 +441,7 @@ class GraphStore:
                 """UNWIND $rows AS r
                 MERGE (s:Source {id: r.id})
                 SET s.title = r.title, s.kind = r.kind, s.path = r.path,
-                    s.duration = r.duration, s.pages = r.pages
+                    s.duration = r.duration, s.pages = r.pages, s.url = r.url
                 WITH s
                 MATCH (d:Domain {name: $domain})
                 MERGE (s)-[:PART_OF]->(d)""",
@@ -672,7 +673,7 @@ class GraphStore:
             """UNWIND $rows AS r
             MERGE (s:Source {id: r.id})
             SET s.title = r.title, s.kind = r.kind, s.path = r.path,
-                s.duration = r.duration, s.pages = r.pages
+                s.duration = r.duration, s.pages = r.pages, s.url = r.url
             WITH s MATCH (d:Domain {name: $domain}) MERGE (s)-[:PART_OF]->(d)""",
             rows=rows.sources,
             domain=domain,
