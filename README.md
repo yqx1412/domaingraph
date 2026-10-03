@@ -146,6 +146,42 @@ Modes: `vector` (bge-m3 over passages), `graph` (rank passages by the query's co
 
 Full write-up: [`benchmarks/search/results/d4-search.md`](benchmarks/search/results/d4-search.md).
 
+## D5: MCP server
+
+```powershell
+uv run domaingraph mcp                          # stdio; run from the repo root (.env, data/)
+uv run domaingraph mcp --allow-ingest D:\lectures   # also allow ingest_source under that folder
+uv run domaingraph retitle 9ec4 "MIT 6.006 Fall 2011, Lecture 7: ..."   # titles are what agents cite
+```
+
+| Tool | What it returns |
+|---|---|
+| `search(query, k, mode)` | passages, best first, each with `source` (title), `at` (time range) and `text`; `mode` is `vector` (default, the best in D4), `hybrid` or `graph` |
+| `get_concept(name)` | definition, aliases, related concepts, where it is mentioned and facts about it; an unknown name gets the 5 closest names |
+| `related_concepts(name, predicate, k)` | the concept's relations, most-mentioned first |
+| `add_fact` / `recall_facts` / `forget_fact` / `list_facts` | agent long-term memory: `(:Fact:Memory)` nodes with bge-m3 embeddings, in a `scope`, recalled by meaning |
+| `clear_scope(scope)` | delete one scope's memories (for benchmark isolation; refuses `default`) |
+| `ingest_source(path, title, extract)` | add a file. Its passages are embedded, and with `extract=true` its concepts are extracted too. **Off unless `--allow-ingest` names a folder**, and only files under those folders can be read |
+
+The roadmap names five tools. The other memory tools and `clear_scope` exist so AgentOS's long-term memory can run entirely on DomainGraph. Graph reloads (`graph load`, even `--replace`) never delete agent memories.
+
+**Demo** (AgentOS with `examples/domaingraph/agentos.toml`, qwen3:8b, one `search` call, 9 s):
+
+```text
+> What did lecture 7 say about radix sort? Cite the lecture and timestamps.
+
+Lecture 7 discussed radix sort as an advanced sorting algorithm that extends the concept of
+counting sort. It explained that radix sort can handle a much larger range of values for k
+[...] while still maintaining linear time complexity. Specifically, it mentioned that if all
+integers are between 0 and n^100, radix sort can sort them in n log n time. [...]
+Citation: MIT 6.006 Fall 2011, Lecture 7: Counting Sort, Radix Sort, Lower Bounds for
+Sorting (44:02-45:38 and 45:27-46:50).
+```
+
+The cited times hold up: radix sort is introduced at 44:02 (chunk 38) and explained from 45:27 (chunk 39). The answer repeats one slip from the lecture itself, though. The lecturer says "n log n time" where he means linear, and corrects himself in the next sentence. qwen3:14b's answer has the same content and avoids that slip.
+
+**Done when:** AgentOS's A6 long-term memory runs on DomainGraph instead of SQLite (`agentos run|bench|memory --memory-backend domaingraph`). On the A6 memory benchmark with auto-injection, it passes 22/22 on qwen3:8b and qwen3:14b, against 20/22 with SQLite. The difference is the "boss" vs "manager" task, which keyword search can't match. See `../agentos/benchmarks/results/a6-domaingraph-memory.md`.
+
 ## Development
 
 ```powershell
