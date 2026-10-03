@@ -45,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("sources", help="List ingested sources")
 
+    rt = sub.add_parser("retitle", help="Set a source's title (shown in citations)")
+    rt.add_argument("source_id", help="Source id or a unique prefix")
+    rt.add_argument("title")
+
     show = sub.add_parser("show", help="Print a source's chunks")
     show.add_argument("source_id", help="Source id or a unique prefix")
     show.add_argument("--limit", type=int, default=None)
@@ -129,6 +133,11 @@ def build_parser() -> argparse.ArgumentParser:
     es.add_argument(
         "--split", default="all", choices=["all", "dev", "test"], help="Score one half only"
     )
+
+    from domaingraph.mcp_server import add_arguments as mcp_arguments
+
+    mc = sub.add_parser("mcp", help="Run the MCP server on stdio (D5)")
+    mcp_arguments(mc)
     return p
 
 
@@ -150,6 +159,12 @@ def main(argv: list[str] | None = None) -> int:
         return _ingest(args)
     if args.command == "sources":
         return _sources(args)
+    if args.command == "retitle":
+        return _retitle(args)
+    if args.command == "mcp":
+        from domaingraph.mcp_server import run
+
+        return run(args)
     if args.command == "show":
         return _show(args)
     if args.command == "wer":
@@ -269,6 +284,25 @@ def _resolve(out: Path, prefix: str) -> str | None:
         )
         return None
     return ids[0]
+
+
+def _retitle(args: argparse.Namespace) -> int:
+    from domaingraph.pipeline import source_dir
+
+    sid = _resolve(args.out, args.source_id)
+    if sid is None:
+        return 2
+    title = " ".join(args.title.split())
+    if not title:
+        print("error: empty title", file=sys.stderr)
+        return 2
+    path = source_dir(args.out, sid) / "source.json"
+    source, _ = load_source(args.out, sid)
+    old = source.title
+    source.title = title
+    path.write_text(source.model_dump_json(indent=2), encoding="utf-8")
+    print(f"{sid}: {old!r} -> {title!r} (run `graph load` to update the graph)")
+    return 0
 
 
 def _show(args: argparse.Namespace) -> int:

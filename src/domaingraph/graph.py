@@ -383,7 +383,11 @@ class GraphStore:
         for q in _CONSTRAINTS:
             self.run(q)
         if dims:
-            for name, label in (("concept_embedding", "Concept"), ("chunk_embedding", "Chunk")):
+            for name, label in (
+                ("concept_embedding", "Concept"),
+                ("chunk_embedding", "Chunk"),
+                ("memory_embedding", "Memory"),
+            ):
                 self.run(_VECTOR_INDEX.format(name=name, label=label, dims=int(dims)))
             self.run("CALL db.awaitIndexes(300)")
 
@@ -422,7 +426,8 @@ class GraphStore:
                 self.run("DROP INDEX concept_embedding IF EXISTS")
                 self.run("DROP INDEX chunk_embedding IF EXISTS")
         if replace:
-            self.run("MATCH (n) WHERE n:Concept OR n:Fact DETACH DELETE n")
+            # Agent memories (D5) are not part of a knowledge file: they stay.
+            self.run("MATCH (n) WHERE (n:Concept OR n:Fact) AND NOT n:Memory DETACH DELETE n")
             if embedder is not None and meta.get("embed_model") != emb_model:
                 self.run("MATCH (c:Chunk) REMOVE c.embedding, c.embed_hash")
         self.init_schema(dims)
@@ -550,10 +555,10 @@ class GraphStore:
         removed = {}
         for name, q in {
             "concepts": "MATCH (n:Concept) WHERE n.load_id <> $id DETACH DELETE n",
-            "facts": "MATCH (n:Fact) WHERE n.load_id <> $id DETACH DELETE n",
+            "facts": "MATCH (n:Fact) WHERE NOT n:Memory AND n.load_id <> $id DETACH DELETE n",
             "edges": (
-                "MATCH (:Concept|Fact)-[e:RELATED_TO|PART_OF|MENTIONED_IN|ABOUT]->(t) "
-                "WHERE NOT t:Domain AND e.load_id <> $id DELETE e"
+                "MATCH (f:Concept|Fact)-[e:RELATED_TO|PART_OF|MENTIONED_IN|ABOUT]->(t) "
+                "WHERE NOT t:Domain AND NOT f:Memory AND e.load_id <> $id DELETE e"
             ),
         }.items():
             removed[name] = self.run(q + " RETURN count(*) AS n", id=load_id)[0]["n"]
@@ -644,8 +649,57 @@ class GraphStore:
 
     def reset(self) -> None:
         self.run("MATCH (n) DETACH DELETE n")
-        for name in ("concept_embedding", "chunk_embedding"):
+        for name in ("concept_embedding", "chunk_embedding", "memory_embedding"):
             self.run(f"DROP INDEX {name} IF EXISTS")
+
+    def load_passages(
+        self,
+        source: Source,
+        chunks: Sequence[Chunk],
+        domain: str,
+        embedder: Embedder | None = None,
+    ) -> int:
+        """Add one source and its chunks without touching concepts or facts (D5
+        ``ingest_source`` before any extraction). Returns the number of chunks embedded."""
+        rows = build_rows(Knowledge(model=""), [(source, chunks)], domain)
+        meta = self.meta()
+        if embedder is not None and meta.get("embed_model") not in (None, embedder.model):
+            raise GraphError(
+                f"the graph's embeddings come from {meta['embed_model']!r}, not {embedder.model!r}"
+            )
+        self.run("MERGE (d:Domain {name: $name})", name=domain)
+        self.run(
+            """UNWIND $rows AS r
+            MERGE (s:Source {id: r.id})
+            SET s.title = r.title, s.kind = r.kind, s.path = r.path,
+                s.duration = r.duration, s.pages = r.pages
+            WITH s MATCH (d:Domain {name: $domain}) MERGE (s)-[:PART_OF]->(d)""",
+            rows=rows.sources,
+            domain=domain,
+        )
+        for b in _batches(rows.chunks):
+            self.run(
+                """UNWIND $rows AS r
+                MATCH (s:Source {id: r.source_id})
+                MERGE (c:Chunk {id: r.id})
+                SET c.index = r.index, c.text = r.text, c.n_words = r.n_words,
+                    c.start = r.start, c.end = r.end, c.page_start = r.page_start,
+                    c.page_end = r.page_end, c.heading = r.heading, c.locator = r.locator
+                MERGE (c)-[:PART_OF]->(s)""",
+                rows=b,
+            )
+        if embedder is None:
+            return 0
+        if not meta.get("dims"):
+            dims = len(embedder.embed(["dimension probe"])[0])
+            self.init_schema(dims)
+            self.run(
+                "MERGE (m:Meta {key: 'graph'}) SET m.embed_model = $e, m.dims = $d",
+                e=embedder.model,
+                d=dims,
+            )
+        rows.concepts = []
+        return self._embed(embedder, rows)
 
 
 TRACE_QUERY = """
