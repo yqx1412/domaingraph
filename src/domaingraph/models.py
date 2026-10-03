@@ -58,6 +58,7 @@ class Source(BaseModel):
     title: str
     sha256: str
     bytes: int
+    url: str | None = None  # where the original lives, e.g. a YouTube video (D6 links times)
     duration: float | None = None  # seconds, audio/video
     pages: int | None = None  # PDF
     language: str | None = None
