@@ -62,10 +62,20 @@ concepts:
     core: false
     chunks: [2, 3, 40, 41]
   - name: rotation
-    aliases: [left rotate, right rotate]
+    aliases: []
     type: operation
     core: true
     chunks: [27, 28, 29, 30, 31, 32, 36, 37, 39]
+  - name: left rotate
+    aliases: [left rotation]
+    type: operation
+    core: false
+    chunks: [27, 28, 29, 39]
+  - name: right rotate
+    aliases: [right rotation]
+    type: operation
+    core: false
+    chunks: [29, 30, 31, 32, 33, 36, 37, 39]
   - name: double rotation
     aliases: [two rotations]
     type: operation
@@ -118,16 +128,16 @@ concepts:
     chunks: [40]
   - name: priority queue
     aliases: []
-    type: data_structure
+    type: other
     core: false
     chunks: [41, 42]
   - name: abstract data type
-    aliases: [ADT, interface]
+    aliases: [ADT]
     type: other
     core: false
     chunks: [41]
   - name: delete min
-    aliases: [find the min]
+    aliases: []
     type: operation
     core: false
     chunks: [40, 41]
@@ -145,11 +155,11 @@ relations:
   - {subject: insert, predicate: uses, object: rotation, chunks: [30, 33]}
   - {subject: insert, predicate: uses, object: double rotation, chunks: [32, 33]}
   - {subject: double rotation, predicate: uses, object: rotation, chunks: [33]}
-  - {subject: rotation, predicate: has_property, object: BST property, chunks: [28, 29]}
-  - {subject: height, predicate: uses, object: data structure augmentation, chunks: [7, 8]}
+  - {subject: left rotate, predicate: is_a, object: rotation, chunks: [27, 28]}
+  - {subject: right rotate, predicate: is_a, object: rotation, chunks: [29, 30]}
+  - {subject: AVL tree, predicate: uses, object: data structure augmentation, chunks: [7, 8]}
   - {subject: AVL tree, predicate: uses, object: height, chunks: [8, 9]}
   - {subject: AVL tree, predicate: uses, object: rotation, chunks: [24, 39]}
-  - {subject: logarithmic height, predicate: uses, object: recurrence, chunks: [17, 21, 23]}
   - {subject: recurrence, predicate: uses, object: Fibonacci numbers, chunks: [19]}
   - {subject: Fibonacci numbers, predicate: has_property, object: golden ratio, chunks: [20, 21]}
   - {subject: AVL sort, predicate: uses, object: AVL tree, chunks: [39, 40]}

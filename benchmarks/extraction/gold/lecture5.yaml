@@ -32,7 +32,7 @@ concepts:
     core: true
     chunks: [0, 1, 2, 3, 19, 26]
   - name: k-minute check
-    aliases: [k minute check, safety constraint]
+    aliases: [k minute check]
     type: operation
     core: true
     chunks: [2, 3, 20, 21, 22, 23, 33]
@@ -72,7 +72,7 @@ concepts:
     core: true
     chunks: [29, 30, 36, 37, 38, 40, 41]
   - name: subtree size
-    aliases: [subtree sizes, size]
+    aliases: [subtree sizes]
     type: property
     core: true
     chunks: [31, 32, 33, 36, 38, 39, 40]
@@ -82,8 +82,8 @@ concepts:
     core: true
     chunks: [16, 17, 18, 19]
   - name: tree height
-    aliases: [height, height of the tree, h]
-    type: complexity
+    aliases: [height, height of the tree]
+    type: property
     core: true
     chunks: [22, 24, 27, 28, 41, 42]
   - name: logarithmic time
@@ -92,17 +92,17 @@ concepts:
     core: true
     chunks: [3, 4, 8, 9, 10, 15, 30, 42]
   - name: linear time
-    aliases: [order n, linear]
+    aliases: [order n]
     type: complexity
     core: false
     chunks: [6, 7, 11, 12, 14, 41]
   - name: constant time
-    aliases: [order 1, constant]
+    aliases: [order 1]
     type: complexity
     core: false
     chunks: [6, 8, 10, 27]
   - name: unsorted array
-    aliases: [unsorted list, array]
+    aliases: [unsorted list]
     type: data_structure
     core: false
     chunks: [6, 7]
@@ -112,7 +112,7 @@ concepts:
     core: true
     chunks: [7, 8, 9, 10, 15, 21]
   - name: sorted list
-    aliases: [linked list, list]
+    aliases: [sorted linked list]
     type: data_structure
     core: false
     chunks: [10, 11, 21]
@@ -137,7 +137,7 @@ concepts:
     core: false
     chunks: [8, 9, 10]
   - name: node key
-    aliases: [key, key of x]
+    aliases: [key of x]
     type: property
     core: false
     chunks: [16, 17, 25]
@@ -148,7 +148,6 @@ concepts:
     chunks: [25]
 relations:
   - {subject: binary search tree, predicate: contrasts_with, object: sorted array, chunks: [21, 22]}
-  - {subject: binary search tree, predicate: uses, object: binary search, chunks: [15, 20]}
   - {subject: binary search tree, predicate: solves, object: runway reservation system, chunks: [15, 19]}
   - {subject: binary search tree, predicate: has_property, object: BST invariant, chunks: [16, 17, 18]}
   - {subject: binary search tree, predicate: has_property, object: tree height, chunks: [22, 24]}
@@ -167,9 +166,6 @@ relations:
   - {subject: rank, predicate: part_of, object: augmented binary search tree, chunks: [36, 38]}
   - {subject: rank, predicate: uses, object: subtree size, chunks: [38, 40]}
   - {subject: insert, predicate: uses, object: k-minute check, chunks: [22, 23]}
-  - {subject: insert, predicate: has_property, object: tree height, chunks: [22, 24]}
-  - {subject: find min, predicate: has_property, object: tree height, chunks: [27, 28]}
-  - {subject: rank, predicate: has_property, object: tree height, chunks: [37, 40]}
   - {subject: heap, predicate: has_property, object: heap invariant, chunks: [11, 12]}
   - {subject: heap, predicate: uses, object: heapify, chunks: [14, 15]}
   - {subject: sorted array, predicate: uses, object: binary search, chunks: [7, 9]}

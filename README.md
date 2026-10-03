@@ -58,13 +58,13 @@ domaingraph eval-extract --models qwen3:8b --sweep 0.75,0.85,0.9   # merge thres
   The merged result is written to `data/knowledge/<model>.json`. Every concept, relation and fact keeps all its mentions, with chunk, time range and confidence.
 - **Evaluation** (`evaluate_extraction.py`): the extracted concepts and relations are compared with gold sets in `benchmarks/extraction/gold/`. It also measures pairwise merge quality.
 
-**Result:** gold sets for 3 lectures (MIT 6.006 Lectures 5-7): 80 concepts and 86 relations. Strict name/alias matching:
+**Result:** gold sets for 3 lectures (MIT 6.006 Lectures 5-7): 82 concepts and 80 relations. Strict name/alias matching:
 
 | Model | Concepts P / R | Core concepts R | Relations P / R | Rel P, ends in gold |
 |---|---|---|---|---|
-| qwen3:8b | 28% / 88% | 95% | 6% / 52% | 22% |
-| qwen3:14b | 23% / 89% | 93% | 5% / 44% | 21% |
-| llama3.1:8b | 30% / 16% | 26% | 12% / 3% | 3 of 4 |
+| qwen3:8b | 28% / 87% | 95% | 6% / 51% | 20% |
+| qwen3:14b | 23% / 88% | 93% | 5% / 41% | 20% |
+| llama3.1:8b | 30% / 16% | 26% | 12% / 4% | 3 of 4 |
 
 - **Recall is high, precision is low.** The extractor finds almost every concept the lecture teaches, but also lists generic words (`node`, `pointer`) and minor real ones the gold set leaves out.
 - **Relations are the weakest part.** Only about 1 in 5 relations between two gold concepts is right; the rest have the wrong predicate or direction.

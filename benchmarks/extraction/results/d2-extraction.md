@@ -21,9 +21,30 @@ Reproduce: `domaingraph extract --model <m>` for each model, then
     with 2 relations: the lecture demonstrates stability without naming it, and radix sort
     depends on it.
 
+  A second pass, made with the user, applied two predicate rules and tightened aliases:
+  - **`has_property`** means an intrinsic property or invariant of the subject. It does not
+    cover "runs in O(h)" or "preserves X". **`uses`** needs an algorithm, data structure,
+    operation or technique as its subject. **`solves`** also covers implementing an ADT
+    (`heap solves priority queue`).
+  - **Removed relations:** in Lecture 5, `insert` / `find min` / `rank` `has_property tree
+    height` and `BST uses binary search`. In Lecture 6, `rotation has_property BST property`
+    and `logarithmic height uses recurrence`. In Lecture 7, `height of a tree` / `binary
+    search` `has_property worst case running time`, plus both `uses key`.
+  - **Changed relations:** in Lecture 6, `height uses data structure augmentation` became
+    `AVL tree uses data structure augmentation`. In Lecture 7, `part_of` became `is_a` for
+    `comparison model` / `RAM model` → model of computation and `integer sorting` → sorting.
+  - **Added:** in Lecture 6, `left rotate` and `right rotate` became their own concepts
+    (each `is_a rotation`) instead of aliases of `rotation`. In Lecture 7, `lower bound uses
+    permutation` and `lower bound uses Stirling's approximation` cover the proof chain.
+  - **Aliases dropped** as too generic or wrong: `safety constraint`, `size`, `h`, `array`,
+    `list`, `linked list`, `key`, `constant`, `linear` (L5); `find the min`, `interface`
+    (L6); `comparison sort(ing)` on `comparison model`, `ram`, `word`, `search` (L7).
+  - **Types made consistent:** `tree height` → property (L5), `priority queue` and
+    `abstract data type` → other (L6, L7). Names in L7 are cased like the other lectures.
+
   Until a
   human has checked them, these numbers measure agreement with that annotator.
-- **Gold: 80 concepts (42 core) and 86 relations.** "Core" means a student must learn it
+- **Gold: 82 concepts (42 core) and 80 relations.** "Core" means a student must learn it
   from that lecture.
 - **Precision is a lower bound.** A real concept the annotator left out (`heap sort`,
   `left subtree`) counts as a false positive. Strict matching is by normalized name or
@@ -41,16 +62,16 @@ Merge: names, then bge-m3 >= 0.85 with the contrast guard (see below).
 
 | Model | Concepts P / R / F1 | Lenient P / R | Core R | Dups | Relations P / R | Any-pred P / R | Rel P, ends in gold | #concepts / #rels |
 |---|---|---|---|---|---|---|---|---|
-| qwen3:8b, >= 1 chunks | 28% / 88% / 42% | 28% / 89% | 95% | 19 | 6% / 52% | 7% / 59% | 22% | 250 / 700 |
-| qwen3:8b, >= 2 chunks | 31% / 72% / 43% | 32% / 76% | 88% | 14 | 6% / 47% | 7% / 53% | 21% | 189 / 629 |
-| qwen3:14b, >= 1 chunks | 23% / 89% / 36% | 23% / 89% | 93% | 25 | 5% / 44% | 7% / 58% | 21% | 312 / 726 |
-| qwen3:14b, >= 2 chunks | 26% / 79% / 39% | 28% / 82% | 86% | 20 | 5% / 42% | 7% / 55% | 21% | 240 / 657 |
-| llama3.1:8b, >= 1 chunks | 30% / 16% / 21% | 40% / 21% | 26% | 1 | 12% / 3% | 17% / 5% | 75% (3 of 4) | 43 / 24 |
+| qwen3:8b, >= 1 chunks | 28% / 87% / 43% | 29% / 88% | 95% | 12 | 6% / 51% | 7% / 57% | 20% | 250 / 700 |
+| qwen3:8b, >= 2 chunks | 31% / 72% / 44% | 33% / 76% | 88% | 9 | 6% / 46% | 7% / 52% | 20% | 189 / 629 |
+| qwen3:14b, >= 1 chunks | 23% / 88% / 37% | 23% / 88% | 93% | 17 | 5% / 41% | 6% / 57% | 20% | 312 / 726 |
+| qwen3:14b, >= 2 chunks | 26% / 77% / 39% | 28% / 80% | 86% | 14 | 5% / 39% | 7% / 54% | 20% | 240 / 657 |
+| llama3.1:8b, >= 1 chunks | 30% / 16% / 21% | 40% / 21% | 26% | 0 | 12% / 4% | 17% / 5% | 75% (3 of 4) | 43 / 24 |
 | llama3.1:8b, >= 2 chunks | 36% / 6% / 11% | 50% / 9% | 7% | 0 | 0% / 0% | 0% / 0% | 0% | 14 / 4 |
 
 ## Findings
 
-- **Recall is high, precision is low.** qwen3:8b finds 88% of the gold concepts and 95% of
+- **Recall is high, precision is low.** qwen3:8b finds 87% of the gold concepts and 95% of
   the core ones. But only about 3 in 10 of its concepts are in the gold set. A sample of
   the false positives shows two kinds:
   - generic words (`node`, `pointer`, `set`, `time complexity`, `log n`)
@@ -61,7 +82,7 @@ Merge: names, then bge-m3 >= 0.85 with the contrast guard (see below).
   12 concepts. Neither was enough.
 - **qwen3:8b is the better extractor, not qwen3:14b.** Both reach the same recall, but 14b
   lists about 25% more concepts, so its precision is lower (23% vs 28%). Its relation
-  recall on Lecture 5 is also lower (38% vs 59%).
+  recall on Lecture 5 is also lower (40% vs 60%).
 - **Relations are the weak part.** Only 5-6% of extracted relations are exactly in gold.
   Of the relations between two gold concepts, about 1 in 5 is right. Samples of the rest:
   - plausible relations with the wrong predicate: `rotation part_of AVL tree` where gold
@@ -69,8 +90,10 @@ Merge: names, then bge-m3 >= 0.85 with the contrast guard (see below).
   - reversed relations: `integer sorting solves counting sort`
   - weakly supported relations: `successor has_property height`
 
-  Some of these are defensible, and the gold set has only 86 relations. Treat relation
-  precision as the least reliable number here.
+  Some of these are defensible, and the gold set has only 80 relations. Treat relation
+  precision as the least reliable number here. The second gold pass (predicate rules, 10
+  relations removed or changed) moved relation precision by at most 2 points, so the low
+  number is not an artifact of a few borderline gold choices.
 - **The model's confidence is useless.** qwen3:8b gave 96% of its concept mentions exactly
   0.9, and the rest 0.8 or 1.0. Confidence can't be used as a filter.
 - **Support works better as a filter, but costs core recall.** Requiring 2+ chunks cuts the
@@ -99,14 +122,14 @@ share no words (`insert` / `insertion`, `delete` / `remove`) are still decided b
 
 | Model | Merge | Concepts | Merge P / R | Concepts P / R | Dups |
 |---|---|---|---|---|---|
-| qwen3:8b | names only | 219 | 100.0% / 71.6% | 27% / 88% | 21 |
-| qwen3:8b | bge-m3 >= 0.75 | 202 | 99.5% / 83.0% | 29% / 86% | 16 |
-| qwen3:8b | **bge-m3 >= 0.85** | 215 | **100.0% / 75.1%** | 28% / 88% | 19 |
-| qwen3:8b | bge-m3 >= 0.90 | 217 | 100.0% / 71.8% | 28% / 88% | 20 |
-| qwen3:14b | names only | 278 | 100.0% / 66.3% | 22% / 89% | 26 |
-| qwen3:14b | bge-m3 >= 0.75 | 247 | 99.3% / 74.1% | 24% / 86% | 21 |
-| qwen3:14b | **bge-m3 >= 0.85** | 271 | **100.0% / 66.4%** | 23% / 89% | 25 |
-| qwen3:14b | bge-m3 >= 0.90 | 276 | 100.0% / 66.3% | 22% / 89% | 26 |
+| qwen3:8b | names only | 219 | 100.0% / 79.1% | 28% / 87% | 13 |
+| qwen3:8b | bge-m3 >= 0.75 | 202 | 90.1% / 83.0% | 28% / 83% | 11 |
+| qwen3:8b | **bge-m3 >= 0.85** | 215 | **100.0% / 82.7%** | 28% / 87% | 12 |
+| qwen3:8b | bge-m3 >= 0.90 | 217 | 100.0% / 79.1% | 28% / 87% | 13 |
+| qwen3:14b | names only | 278 | 100.0% / 75.0% | 23% / 88% | 18 |
+| qwen3:14b | bge-m3 >= 0.75 | 247 | 88.8% / 75.3% | 23% / 83% | 16 |
+| qwen3:14b | **bge-m3 >= 0.85** | 271 | **100.0% / 75.1%** | 23% / 88% | 17 |
+| qwen3:14b | bge-m3 >= 0.90 | 276 | 100.0% / 75.0% | 23% / 88% | 18 |
 
 - **Names do most of the work.** Normalized names, plus "this name is another concept's
   alias", already merge 1,145 (qwen3:8b) and 1,463 (qwen3:14b) mentions down to 219 and 278
@@ -114,17 +137,20 @@ share no words (`insert` / `insertion`, `delete` / `remove`) are still decided b
 - **Embeddings add little at a safe threshold.** At 0.85 the metric finds no wrong merge,
   and reading the merged groups turns up only one borderline case (`ordering` / `sorted
   order`). The rest are right: `insert` / `insertion`, `delete` / `remove`, `RAM model` /
-  `random access machine`. They gain at most 3.5 points of merge recall, though.
-- **0.75 looks better on this metric than it is.** The metric only sees mentions whose names
-  match gold. Reading the 0.75 groups for qwen3:14b shows wrong merges it can't see:
+  `random access machine`. They gain at most 3.6 points of merge recall, though.
+- **0.75 merges wrongly.** Now that `left rotate` and `right rotate` are gold concepts of
+  their own, the metric sees 0.75 merging them into `rotation` (merge precision 89-90%).
+  Before the second gold pass they were aliases of `rotation`, and the metric showed 0.75
+  at 99%+. Reading the 0.75 groups for qwen3:14b shows more wrong merges than the metric
+  counts:
   - `successor` with `predecessor`
   - `upper bound` with `tight lower bound`
   - `counting sort` with `comparison based sorting`
   - `height of a tree` with `size of a subtree`
 
   That's why the default is 0.85. At 0.65, merge precision falls to 65-68%.
-- **The remaining duplicates need more than names:** `BST invariant` vs `ordering invariant`,
-  `left rotate` vs `rotation`. Definitions, or the graph's own relations, could separate
+- **The remaining duplicates need more than names,** such as `BST invariant` vs `ordering
+  invariant`. Definitions, or the graph's own relations, could separate
   these. That's a job for D3.
 
 ## What changed from the first run (prompt v1)
@@ -142,21 +168,22 @@ sharper list of words to skip. No chunk failed in the v2 run.
 | llama3.1:8b | 34% / 36% | 30% / 16% | 36% | 26% |
 
 The v1 numbers come from the v1 extractions under the merge settings of that time (bge-m3 >=
-0.9, no contrast guard). v2 uses the settings above. Both are scored against the same gold
-sets.
+0.9, no contrast guard). v2 uses the settings above. Both are scored against the gold sets
+as they were before the second review pass, so this table is not directly comparable with
+the ones above.
 
 ## Per source
 
 | Model | Lecture | Concepts P / R | Core R | Relations P / R | Missed core |
 |---|---|---|---|---|---|
-| qwen3:8b | Binary Search Trees, BST Sort | 38% / 86% | 93% | 7% / 59% | BST invariant |
-| qwen3:8b | AVL Trees, AVL Sort | 27% / 85% | 93% | 6% / 48% | AVL sort |
-| qwen3:8b | Counting Sort, Radix Sort, Lower Bounds | 23% / 92% | 100% | 6% / 50% | - |
-| qwen3:14b | Binary Search Trees, BST Sort | 30% / 90% | 93% | 5% / 38% | BST invariant |
-| qwen3:14b | AVL Trees, AVL Sort | 23% / 88% | 93% | 7% / 52% | AVL sort |
-| qwen3:14b | Counting Sort, Radix Sort, Lower Bounds | 17% / 88% | 93% | 4% / 43% | model of computation |
-| llama3.1:8b | Binary Search Trees, BST Sort | 30% / 21% | 43% | 18% / 7% | 8 of 14 |
-| llama3.1:8b | AVL Trees, AVL Sort | 43% / 23% | 29% | 12% / 3% | 10 of 14 |
+| qwen3:8b | Binary Search Trees, BST Sort | 36% / 83% | 93% | 7% / 60% | BST invariant |
+| qwen3:8b | AVL Trees, AVL Sort | 29% / 86% | 93% | 7% / 52% | AVL sort |
+| qwen3:8b | Counting Sort, Radix Sort, Lower Bounds | 23% / 92% | 100% | 4% / 42% | - |
+| qwen3:14b | Binary Search Trees, BST Sort | 29% / 86% | 93% | 4% / 40% | BST invariant |
+| qwen3:14b | AVL Trees, AVL Sort | 25% / 89% | 93% | 7% / 55% | AVL sort |
+| qwen3:14b | Counting Sort, Radix Sort, Lower Bounds | 17% / 88% | 93% | 3% / 27% | model of computation |
+| llama3.1:8b | Binary Search Trees, BST Sort | 30% / 21% | 43% | 18% / 8% | 8 of 14 |
+| llama3.1:8b | AVL Trees, AVL Sort | 43% / 21% | 29% | 12% / 3% | 10 of 14 |
 | llama3.1:8b | Counting Sort, Radix Sort, Lower Bounds | 11% / 4% | 7% | 0% / 0% | 13 of 14 |
 
 All at `>= 1 chunks`.
