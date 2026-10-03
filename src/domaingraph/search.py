@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from domaingraph.graph import GraphStore, _forms, _tokens, link_fact
+from domaingraph.merge import _cos
 
 Ranking = list[tuple[str, float]]  # (chunk id, score), best first
 
@@ -102,6 +103,7 @@ class GraphSearch:
         self.store = store
         self.p = params or GraphParams()
         self.concepts: dict[str, _Concept] = {}
+        self.concept_vecs: dict[str, list[float]] = {}  # in-memory seeding (no store)
         self.n_chunks = 0
         self.order: dict[str, int] = {}  # deterministic tie-break
         if store is not None:
@@ -155,7 +157,15 @@ class GraphSearch:
     def seeds(self, query: str, vec: list[float] | None) -> dict[str, float]:
         forms = {cid: c.forms for cid, c in self.concepts.items()}
         seeds = dict.fromkeys(link_fact(query, self.concepts, forms), 1.0)
-        if vec is not None and self.store is not None and self.p.seeds_by_vector:
+        if vec is not None and self.concept_vecs and self.p.seeds_by_vector:
+            hits = sorted(
+                ((cid, _cos(vec, v)) for cid, v in self.concept_vecs.items()),
+                key=lambda kv: -kv[1],
+            )[: self.p.seeds_by_vector]
+            for cid, s in hits:
+                if s >= self.p.seed_min_score:
+                    seeds[cid] = max(seeds.get(cid, 0.0), s)
+        elif vec is not None and self.store is not None and self.p.seeds_by_vector:
             for r in self.store.run(
                 """CALL db.index.vector.queryNodes('concept_embedding', $k, $vec)
                 YIELD node, score RETURN node.id AS id, score""",
@@ -186,6 +196,38 @@ class GraphSearch:
         scores = self.score(self.seeds(query, vec))
         ranked = sorted(scores.items(), key=lambda kv: (-kv[1], self.order.get(kv[0], 0)))
         return ranked[:k]
+
+
+def gold_graph(
+    golds: Sequence[Any],
+    chunk_ids: Sequence[str],
+    chunk_id: Any,
+    embedder: Any = None,
+    params: GraphParams | None = None,
+) -> GraphSearch:
+    """A :class:`GraphSearch` over the D2 gold sets instead of the extracted graph: the
+    gold concepts, their labeled chunks and gold relations. An upper bound on what better
+    extraction could give graph search. ``chunk_id(source_id, index)`` resolves chunks."""
+    g = GraphSearch(None, params)
+    concepts, mentions, edges = [], [], []
+    for gold in golds:
+        for c in gold.concepts:
+            cid = f"{gold.source_id}/{c.name}"
+            concepts.append({"id": cid, "name": c.name, "aliases": list(c.aliases)})
+            for i in c.chunks:
+                ch = chunk_id(gold.source_id, i)
+                if ch is not None:
+                    mentions.append({"c": cid, "ch": ch, "facts": 0})
+        for r in gold.relations:
+            edges.append(
+                {"a": f"{gold.source_id}/{r.subject}", "b": f"{gold.source_id}/{r.object}"}
+            )
+    g.build(concepts, mentions, edges, chunk_ids)
+    if embedder is not None:
+        ids = list(g.concepts)
+        vecs = embedder.embed([g.concepts[i].name for i in ids])
+        g.concept_vecs = dict(zip(ids, vecs, strict=True))
+    return g
 
 
 # --- hybrid ------------------------------------------------------------------------------

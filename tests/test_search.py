@@ -9,9 +9,17 @@ from domaingraph.evaluate_search import (
     QueryResult,
     load_queries,
     paired_bootstrap,
+    split_of,
     summarize,
 )
-from domaingraph.search import BM25Search, GraphParams, GraphSearch, HybridSearch, rrf
+from domaingraph.search import (
+    BM25Search,
+    GraphParams,
+    GraphSearch,
+    HybridSearch,
+    gold_graph,
+    rrf,
+)
 
 CHUNKS = ["a:0", "a:1", "a:2", "a:3"]
 
@@ -116,6 +124,23 @@ def test_bm25_prefers_rare_terms():
     assert bm.search("unrelated words", None, 3) == []
 
 
+def test_gold_graph_uses_gold_concepts_and_chunks():
+    from types import SimpleNamespace as NS
+
+    gold = NS(
+        source_id="a",
+        concepts=[
+            NS(name="radix sort", aliases=[], chunks=[2]),
+            NS(name="stable sort", aliases=["stability"], chunks=[3, 9]),  # 9 doesn't exist
+        ],
+        relations=[NS(subject="radix sort", object="stable sort")],
+    )
+    g = gold_graph([gold], CHUNKS, lambda s, i: f"{s}:{i}" if i < 4 else None)
+    assert g.concepts["a/stable sort"].chunks == {"a:3": 0}
+    ranked = [c for c, _ in g.search("why is stability needed", None, 4)]
+    assert ranked == ["a:3", "a:2"]  # the seed, then its gold neighbour at 0.25x
+
+
 def test_metrics():
     q = Query("q1", "x", "fact", frozenset({"a:1", "a:3"}))
     r = QueryResult(q, ["a:0", "a:3", "a:2", "a:1"])
@@ -153,6 +178,12 @@ def test_load_queries_both_formats_and_bad_labels(tmp_path):
     )
     with pytest.raises(ValueError, match="no chunk 7"):
         load_queries(tmp_path, cid)
+
+
+def test_split_is_stable_and_roughly_even():
+    ids = [f"q-{i}" for i in range(200)]
+    assert [split_of(i) for i in ids] == [split_of(i) for i in ids]
+    assert 70 < sum(split_of(i) == "dev" for i in ids) < 130
 
 
 def test_paired_bootstrap():

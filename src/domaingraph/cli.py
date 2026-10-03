@@ -19,6 +19,9 @@ DEFAULT_EXTRACT_MODEL = "qwen3:14b"
 DEFAULT_MERGE_THRESHOLD = 0.85
 DEFAULT_GRAPH_MODEL = "qwen3:8b"
 SEARCH_MODES = ("bm25", "vector", "graph", "hybrid", "hybrid-rrf")
+# Diagnostics for eval-search only: graph search over the D2 gold sets instead of the
+# extracted graph, i.e. what perfect extraction would give.
+EVAL_ONLY_MODES = ("graph-gold", "hybrid-gold")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -697,6 +700,21 @@ def _searchers(store, out: Path, modes) -> dict:
         built["hybrid-rrf"] = HybridSearch(
             built["vector"], built["graph"], fusion="rrf", bonus=0.01
         )
+    if {"graph-gold", "hybrid-gold"} & set(modes):
+        from domaingraph.evaluate_extraction import load_gold_dir
+        from domaingraph.llm import OllamaEmbedder
+        from domaingraph.search import gold_graph
+
+        srcs = sorted(list_sources(out), key=lambda s: s.id)
+        loaded = {s.id: load_source(out, s.id)[1] for s in srcs}
+        by_pos = {(sid, c.index): c.id for sid, cs in loaded.items() for c in cs}
+        built["graph-gold"] = gold_graph(
+            load_gold_dir(Path("benchmarks/extraction/gold")),
+            [c.id for cs in loaded.values() for c in cs],
+            lambda s, i: by_pos.get((s, i)),
+            OllamaEmbedder("bge-m3"),
+        )
+        built["hybrid-gold"] = HybridSearch(VectorSearch(store), built["graph-gold"])
     return {m: built[m] for m in modes}
 
 
@@ -750,9 +768,12 @@ def _eval_search(args: argparse.Namespace, parser) -> int:
     from domaingraph.llm import OllamaEmbedder
 
     modes = [m.strip() for m in args.modes.split(",") if m.strip()]
-    bad = [m for m in modes if m not in SEARCH_MODES]
+    bad = [m for m in modes if m not in SEARCH_MODES + EVAL_ONLY_MODES]
     if bad:
-        print(f"error: unknown modes {bad}; choose from {SEARCH_MODES}", file=sys.stderr)
+        print(
+            f"error: unknown modes {bad}; choose from {SEARCH_MODES + EVAL_ONLY_MODES}",
+            file=sys.stderr,
+        )
         return 1
     by_pos = {}
     for s in list_sources(args.out):
