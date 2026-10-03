@@ -18,6 +18,10 @@ DEFAULT_OUT = Path("data")
 DEFAULT_EXTRACT_MODEL = "qwen3:14b"
 DEFAULT_MERGE_THRESHOLD = 0.85
 DEFAULT_GRAPH_MODEL = "qwen3:8b"
+SEARCH_MODES = ("bm25", "vector", "graph", "hybrid", "hybrid-rrf")
+# Diagnostics for eval-search only: graph search over the D2 gold sets instead of the
+# extracted graph, i.e. what perfect extraction would give.
+EVAL_ONLY_MODES = ("graph-gold", "hybrid-gold")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -109,6 +113,22 @@ def build_parser() -> argparse.ArgumentParser:
     gs.add_argument("--embed-model", default="bge-m3")
     grs = gsub.add_parser("reset", help="Delete everything in the graph")
     grs.add_argument("--yes", action="store_true", help="Confirm")
+
+    se = sub.add_parser("search", help="Search passages (D4)")
+    se.add_argument("query")
+    se.add_argument("--mode", default="hybrid", choices=SEARCH_MODES)
+    se.add_argument("-k", type=int, default=5)
+    se.add_argument("--embed-model", default="bge-m3")
+
+    es = sub.add_parser("eval-search", help="Score the search modes on the query set (D4)")
+    es.add_argument("--queries", type=Path, default=Path("benchmarks/search/queries"))
+    es.add_argument("--modes", default=",".join(SEARCH_MODES), help="Comma-separated")
+    es.add_argument("--embed-model", default="bge-m3")
+    es.add_argument("--report", type=Path, default=None, help="Write a Markdown report here")
+    es.add_argument("--details", action="store_true", help="Print each query's first hit")
+    es.add_argument(
+        "--split", default="all", choices=["all", "dev", "test"], help="Score one half only"
+    )
     return p
 
 
@@ -147,12 +167,13 @@ def main(argv: list[str] | None = None) -> int:
         except LLMError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
-    if args.command == "graph":
+    if args.command in ("graph", "search", "eval-search"):
         from domaingraph.graph import GraphError
         from domaingraph.llm import LLMError
 
+        handler = {"graph": _graph, "search": _search, "eval-search": _eval_search}
         try:
-            return _graph(args, parser)
+            return handler[args.command](args, parser)
         except (GraphError, LLMError) as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
@@ -656,4 +677,168 @@ def _graph_reset(args: argparse.Namespace, store) -> int:
         return 1
     store.reset()
     print("graph emptied")
+    return 0
+
+
+# --- D4: search ----------------------------------------------------------------------------
+
+
+def _searchers(store, out: Path, modes) -> dict:
+    from domaingraph.search import BM25Search, GraphSearch, HybridSearch, VectorSearch
+
+    built: dict = {}
+    if "bm25" in modes:
+        chunks = [(c.id, c.text) for s in list_sources(out) for c in load_source(out, s.id)[1]]
+        built["bm25"] = BM25Search(chunks)
+    if {"vector", "hybrid", "hybrid-rrf"} & set(modes):
+        built["vector"] = VectorSearch(store)
+    if {"graph", "hybrid", "hybrid-rrf"} & set(modes):
+        built["graph"] = GraphSearch(store)
+    if "hybrid" in modes:
+        built["hybrid"] = HybridSearch(built["vector"], built["graph"])
+    if "hybrid-rrf" in modes:
+        built["hybrid-rrf"] = HybridSearch(
+            built["vector"], built["graph"], fusion="rrf", bonus=0.01
+        )
+    if {"graph-gold", "hybrid-gold"} & set(modes):
+        from domaingraph.evaluate_extraction import load_gold_dir
+        from domaingraph.llm import OllamaEmbedder
+        from domaingraph.search import gold_graph
+
+        srcs = sorted(list_sources(out), key=lambda s: s.id)
+        loaded = {s.id: load_source(out, s.id)[1] for s in srcs}
+        by_pos = {(sid, c.index): c.id for sid, cs in loaded.items() for c in cs}
+        built["graph-gold"] = gold_graph(
+            load_gold_dir(Path("benchmarks/extraction/gold")),
+            [c.id for cs in loaded.values() for c in cs],
+            lambda s, i: by_pos.get((s, i)),
+            OllamaEmbedder("bge-m3"),
+        )
+        built["hybrid-gold"] = HybridSearch(VectorSearch(store), built["graph-gold"])
+    return {m: built[m] for m in modes}
+
+
+def _check_embed_model(store, model: str) -> None:
+    from domaingraph.graph import GraphError
+
+    meta = store.meta()
+    if meta.get("embed_model") not in (None, model):
+        raise GraphError(f"the graph was embedded with {meta['embed_model']}, not {model}")
+
+
+def _chunk_index(out: Path) -> dict[str, tuple[str, str]]:
+    """chunk id -> (source title, locator)."""
+    idx = {}
+    for s in list_sources(out):
+        for c in load_source(out, s.id)[1]:
+            idx[c.id] = (s.title, c.locator())
+    return idx
+
+
+def _search(args: argparse.Namespace, parser) -> int:
+    from domaingraph.graph import GraphConfig, GraphStore
+    from domaingraph.llm import OllamaEmbedder
+
+    with GraphStore(GraphConfig.from_env()) as store:
+        _check_embed_model(store, args.embed_model)
+        searcher = _searchers(store, args.out, [args.mode])[args.mode]
+        vec = OllamaEmbedder(args.embed_model).embed([args.query])[0]
+        where = _chunk_index(args.out)
+        texts = {
+            c.id: c.text for s in list_sources(args.out) for c in load_source(args.out, s.id)[1]
+        }
+        for rank, (cid, score) in enumerate(searcher.search(args.query, vec, args.k), 1):
+            title, loc = where.get(cid, ("?", "?"))
+            print(f"{rank}. {score:.3f}  {title}  {loc}")
+            print(f"   {texts.get(cid, '')[:160]}...")
+    return 0
+
+
+def _eval_search(args: argparse.Namespace, parser) -> int:
+    from domaingraph.evaluate_search import (
+        METRICS,
+        QueryResult,
+        by_type,
+        load_queries,
+        paired_bootstrap,
+        split_of,
+        summarize,
+    )
+    from domaingraph.graph import GraphConfig, GraphStore
+    from domaingraph.llm import OllamaEmbedder
+
+    modes = [m.strip() for m in args.modes.split(",") if m.strip()]
+    bad = [m for m in modes if m not in SEARCH_MODES + EVAL_ONLY_MODES]
+    if bad:
+        print(
+            f"error: unknown modes {bad}; choose from {SEARCH_MODES + EVAL_ONLY_MODES}",
+            file=sys.stderr,
+        )
+        return 1
+    by_pos = {}
+    for s in list_sources(args.out):
+        for c in load_source(args.out, s.id)[1]:
+            by_pos[(s.id, c.index)] = c.id
+    queries = load_queries(args.queries, lambda sid, i: by_pos.get((sid, i)))
+    if args.split != "all":
+        queries = [q for q in queries if split_of(q.id) == args.split]
+
+    with GraphStore(GraphConfig.from_env()) as store:
+        _check_embed_model(store, args.embed_model)
+        searchers = _searchers(store, args.out, modes)
+        vecs = OllamaEmbedder(args.embed_model).embed([q.text for q in queries])
+        results = {
+            m: [
+                QueryResult(q, [cid for cid, _ in s.search(q.text, v, 10)])
+                for q, v in zip(queries, vecs, strict=True)
+            ]
+            for m, s in searchers.items()
+        }
+
+    cols = list(METRICS)
+    type_counts = ", ".join(f"{t} {len(r)}" for t, r in sorted(by_type(results[modes[0]]).items()))
+    lines = [
+        f"Queries: {len(queries)}, split {args.split} ({type_counts})",
+        "",
+    ]
+    lines += ["| Mode | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
+    for m in modes:
+        s = summarize(results[m])
+        lines.append(f"| {m} | " + " | ".join(f"{s[c]:.3f}" for c in cols) + " |")
+
+    lines += ["", "MRR@10 by query type:", ""]
+    types = sorted(by_type(results[modes[0]]))
+    lines += ["| Mode | " + " | ".join(types) + " |", "|---" * (len(types) + 1) + "|"]
+    for m in modes:
+        bt = by_type(results[m])
+        lines.append(
+            f"| {m} | " + " | ".join(f"{summarize(bt[t])['MRR@10']:.3f}" for t in types) + " |"
+        )
+
+    if "vector" in modes:
+        lines += ["", "Paired difference vs vector (95% bootstrap interval over queries):", ""]
+        lines += ["| Mode | MRR@10 | R@5 |", "|---|---|---|"]
+        for m in modes:
+            if m == "vector":
+                continue
+            cells = []
+            for metric in ("MRR@10", "R@5"):
+                f = METRICS[metric]
+                d, lo, hi = paired_bootstrap(
+                    [f(r) for r in results["vector"]], [f(r) for r in results[m]]
+                )
+                cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+            lines.append(f"| {m} | " + " | ".join(cells) + " |")
+
+    text = "\n".join(lines)
+    print(text)
+    if args.details:
+        print()
+        for i, q in enumerate(queries):
+            hits = "  ".join(f"{m}={results[m][i].first_hit() or '-'}" for m in modes)
+            print(f"{q.id:6} {q.type[:5]:5} {hits}  {q.text}")
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text("# D4 search results\n\n" + text + "\n", encoding="utf-8")
+        print(f"\nwrote {args.report}")
     return 0

@@ -1,0 +1,153 @@
+source_id: 9ec4d790bec6602e
+lecture: lecture7
+queries:
+  - id: l7-01
+    query: "What is the comparison model of computation?"
+    type: definition
+    relevant: [1, 2]
+    answer: "A model where input items are black boxes and the only allowed operation is comparing one item against another."
+  - id: l7-02
+    query: "What is a decision tree for a comparison algorithm?"
+    type: definition
+    relevant: [4]
+    answer: "A tree drawing all possible comparisons an algorithm could make, their outcomes, and the resulting answers."
+  - id: l7-03
+    query: "What does a leaf in a decision tree represent?"
+    type: definition
+    relevant: [8]
+    answer: "A leaf represents that the algorithm has terminated and found the answer to the problem."
+  - id: l7-04
+    query: "How is the height of a tree defined here?"
+    type: definition
+    relevant: [10]
+    answer: "The height is the length of the longest root-to-leaf path."
+  - id: l7-05
+    query: "What does integer sorting assume about the keys?"
+    type: definition
+    relevant: [28]
+    answer: "The keys are non-negative integers in a range from 0 to k minus 1, each fitting in a machine word."
+  - id: l7-06
+    query: "What is counting sort?"
+    type: definition
+    relevant: [31, 32]
+    answer: "A sort that counts how many of each key value occur, then outputs the keys in order using an array of size k."
+  - id: l7-07
+    query: "What is the worst-case lower bound for sorting in the comparison model?"
+    type: fact
+    relevant: [16, 23]
+    answer: "Sorting requires omega n log n comparisons."
+  - id: l7-08
+    query: "How many comparisons does searching need in the comparison model?"
+    type: fact
+    relevant: [11, 14]
+    answer: "Searching requires omega log n comparisons in the worst case."
+  - id: l7-09
+    query: "How many leaves must a sorting decision tree have?"
+    type: fact
+    relevant: [18]
+    answer: "At least n factorial, the number of permutations of the input."
+  - id: l7-10
+    query: "What is the running time of counting sort?"
+    type: fact
+    relevant: [37, 38]
+    answer: "Order n plus k."
+  - id: l7-11
+    query: "How large can k be for radix sort to still run in linear time?"
+    type: fact
+    relevant: [38, 44]
+    answer: "k can be polynomial in n, up to n to a constant power."
+  - id: l7-12
+    query: "What is the best known integer sorting algorithm's running time mentioned?"
+    type: fact
+    relevant: [30]
+    answer: "n times square root of log log n, with high probability."
+  - id: l7-13
+    query: "In this whole setup, what exactly are we counting to say an algorithm is slow or fast?"
+    type: paraphrase
+    relevant: [3]
+    answer: "The time cost is the number of comparisons."
+  - id: l7-14
+    query: "How does binary search decide where to go at each step?"
+    type: procedure
+    relevant: [4, 5]
+    answer: "It looks at the middle item, compares it to the search item, and goes left or right."
+  - id: l7-15
+    query: "How do you count the items in counting sort?"
+    type: procedure
+    relevant: [32]
+    answer: "Run through the items in order and increment the counter at the array index equal to each item's key."
+  - id: l7-16
+    query: "How does the list-based version of counting sort place items?"
+    type: procedure
+    relevant: [35]
+    answer: "For each item append it to the list at its key's index, then concatenate all the lists into the output."
+  - id: l7-17
+    query: "How does radix sort order the integers?"
+    type: procedure
+    relevant: [40]
+    answer: "It sorts by the least significant digit first, then each next digit, up to the most significant digit."
+  - id: l7-18
+    query: "When the method looks at just one position of a number, how does it pull that single piece out quickly?"
+    type: paraphrase
+    relevant: [41, 42]
+    answer: "Compute it with one divide and one mod, which takes constant time."
+  - id: l7-19
+    query: "How is the sorting lower bound derived from the factorial using a sum?"
+    type: procedure
+    relevant: [20, 21, 22]
+    answer: "Take log of n factorial as a sum of logs, then bound the last half of terms by log of n over 2 to get omega n log n."
+  - id: l7-20
+    query: "How do you set the base b to minimize radix sort's running time?"
+    type: procedure
+    relevant: [43]
+    answer: "Set b to theta n so the terms of the running time are balanced."
+  - id: l7-21
+    query: "Why does the height of the search decision tree have to be at least log n?"
+    type: relation
+    relevant: [13, 14]
+    answer: "Because the binary tree must contain at least n leaves, one for each possible answer, so its height is at least log n."
+  - id: l7-22
+    query: "Why does radix sort use counting sort as its subroutine?"
+    type: relation
+    relevant: [41]
+    answer: "Each digit is between 0 and b minus 1, so counting sort can sort by that digit in n plus b time."
+  - id: l7-23
+    query: "How does integer sorting differ from comparison sorting?"
+    type: relation
+    relevant: [27]
+    answer: "Integer sorting uses the RAM model and treats keys as integers instead of only comparing black-box items."
+  - id: l7-24
+    query: "Why does counting sort break down when k gets large?"
+    type: relation
+    relevant: [38]
+    answer: "Because its running time is n plus k, so once k is bigger than n it is no longer linear."
+  - id: l7-25
+    query: "Why does searching stay at log n even though sorting without preprocessing needs n?"
+    type: relation
+    relevant: [25, 26]
+    answer: "The decision-tree technique only proves a log n lower bound, so it cannot capture the linear search cost when items are not preprocessed."
+  - id: l7-26
+    query: "How does proving binary search optimal justify using binary search trees?"
+    type: relation
+    relevant: [15]
+    answer: "Because log n is the best achievable in the comparison model, so binary search tree operations are optimal."
+  - id: l7-27
+    query: "Is there a limit on how fast you can put things in order just by checking which of two is bigger?"
+    type: paraphrase
+    relevant: [16, 23]
+    answer: "Yes, ordering that way needs at least omega n log n operations."
+  - id: l7-28
+    query: "If I only ever ask which of two things comes first, how long must finding one among many take?"
+    type: paraphrase
+    relevant: [11, 14]
+    answer: "At least omega log n operations in the worst case."
+  - id: l7-29
+    query: "When I sort a spreadsheet by a column, why does the rest of each row move with it?"
+    type: paraphrase
+    relevant: [33, 34]
+    answer: "Each item carries extra data beyond its key, and the sort brings that whole item along with its key."
+  - id: l7-30
+    query: "If my numbers are small enough, can I order them faster than the usual n log n?"
+    type: paraphrase
+    relevant: [44]
+    answer: "Yes, when the values are polynomial in n you get a linear-time sort."

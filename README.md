@@ -121,6 +121,31 @@ The first load, including bge-m3 embeddings for 346 nodes, takes 27 s. A reload 
 
 **Demo:** [`docs/d3-demo.cypher`](docs/d3-demo.cypher) walks from `AVL tree` to the 21 Lecture 6 passages that mention it, with timestamps. It then follows `uses` edges one hop and lists concepts taught in more than one lecture. `domaingraph graph trace` runs the same walk from the command line.
 
+## D4: hybrid search
+
+```powershell
+uv run domaingraph search "why does radix sort need a stable sort" --mode hybrid
+uv run domaingraph eval-search --split test      # the headline table
+```
+
+Modes: `vector` (bge-m3 over passages), `graph` (rank passages by the query's concepts and their 1-hop neighbours, with no passage embeddings), `hybrid` (vector's top 50 re-ranked with the graph score), plus `bm25` as a keyword reference and `hybrid-rrf` (rank fusion).
+
+**Result:** 102 queries (AI-drafted from the transcripts, blind to the systems; the 18 that vector missed were then reviewed and 8 labels fixed), MRR@10 and recall. `hybrid` was tuned on the `dev` half, so this is the held-out `test` half:
+
+| Mode | R@1 | R@5 | R@10 | MRR@10 | MRR vs vector (95% CI) |
+|---|---|---|---|---|---|
+| bm25 | 0.353 | 0.647 | 0.737 | 0.596 | -0.06 [-0.15, +0.04] |
+| **vector** | **0.383** | **0.717** | **0.827** | **0.653** | |
+| graph | 0.187 | 0.483 | 0.643 | 0.394 | -0.26 [-0.39, -0.13] |
+| hybrid | 0.367 | 0.697 | 0.777 | 0.618 | -0.04 [-0.11, +0.03] |
+
+- **On these lectures, the graph does not beat vector-only search.** Graph-only search finds the right topic but not the right passage. `AVL tree` is mentioned in 21 of Lecture 6's 43 passages, and a question needs one or two of them.
+- **Better extraction doesn't change that.** Graph search on the hand-corrected D2 gold concepts scores the same (0.35 MRR on all queries). It also finds nothing for paraphrased questions, because no gold concept name appears in them.
+- **As a re-ranker, the graph adds a little.** On all 102 queries, `hybrid` cuts top-10 misses from 16 to 11 and helps on definition, procedure and relation questions, but it hurts paraphrases. The net change is within noise.
+- **Cross-lecture questions are the one place the graph looks useful** (0.51 vs 0.46 MRR, gold graph). There are only 12 of them.
+
+Full write-up: [`benchmarks/search/results/d4-search.md`](benchmarks/search/results/d4-search.md).
+
 ## Development
 
 ```powershell

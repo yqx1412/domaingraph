@@ -1,0 +1,153 @@
+source_id: 9ef0cbfe913412e8
+lecture: lecture6
+queries:
+  - id: l6-01
+    query: "What is the binary search tree property?"
+    type: definition
+    relevant: [1]
+    answer: "Every key in a node's left subtree is less than or equal to its key, and every key in the right subtree is greater than or equal to it."
+  - id: l6-02
+    query: "What does it mean for a tree to be balanced?"
+    type: definition
+    relevant: [4]
+    answer: "A tree is balanced if its height is order log n."
+  - id: l6-03
+    query: "How is the height of a node defined?"
+    type: definition
+    relevant: [6]
+    answer: "The height of a node is the length of the longest downward path from that node to a leaf."
+  - id: l6-04
+    query: "What is the AVL property of a tree?"
+    type: definition
+    relevant: [11]
+    answer: "For every node, the heights of its left and right subtrees differ by at most one."
+  - id: l6-05
+    query: "What is an in-order traversal?"
+    type: definition
+    relevant: [1]
+    answer: "You recursively visit the left child, print the root, then recursively visit the right child, producing the keys in sorted order."
+  - id: l6-06
+    query: "What is a priority queue as an abstract data type?"
+    type: definition
+    relevant: [41]
+    answer: "An abstract data type supporting insert, delete, and find-min operations."
+  - id: l6-07
+    query: "What is the height of a completely unbalanced tree shaped like a path?"
+    type: fact
+    relevant: [4]
+    answer: "Its height is n."
+  - id: l6-08
+    query: "What is the worst-case height bound for an AVL tree in terms of log base 2 of n?"
+    type: fact
+    relevant: [21]
+    answer: "The height is always less than about 1.44 times log base 2 of n."
+  - id: l6-09
+    query: "How much time do successor and predecessor searches take in a BST?"
+    type: fact
+    relevant: [2, 3]
+    answer: "They can be solved in order h time, where h is the height."
+  - id: l6-10
+    query: "Approximately what is the value of the golden ratio phi mentioned in the analysis?"
+    type: fact
+    relevant: [20]
+    answer: "Phi is about 1.618."
+  - id: l6-11
+    query: "What is the height of a leaf node?"
+    type: fact
+    relevant: [6]
+    answer: "A leaf has height 0 because it takes 0 steps to get from a leaf to a leaf."
+  - id: l6-12
+    query: "How long does it take to sort n numbers using an AVL tree?"
+    type: fact
+    relevant: [40]
+    answer: "It takes n log n time, since each of the n inserts takes order log n time."
+  - id: l6-13
+    query: "How do you compute the height of a node from its children?"
+    type: procedure
+    relevant: [7]
+    answer: "Take the maximum of the heights of its two children and add one."
+  - id: l6-14
+    query: "What are the two steps of inserting into an AVL tree?"
+    type: procedure
+    relevant: [25]
+    answer: "First do the ordinary BST insertion of a new leaf, then fix the AVL property."
+  - id: l6-15
+    query: "What pointer changes does a left rotation perform on nodes x and y?"
+    type: procedure
+    relevant: [28]
+    answer: "It swaps which of x and y is higher, reassigning their parent pointers while keeping the BST order, in a constant number of pointer changes."
+  - id: l6-16
+    query: "After the simple BST insert, how do you find the node to fix?"
+    type: procedure
+    relevant: [34]
+    answer: "Start at the changed node and walk up, updating heights, until you find the lowest node that violates the AVL property."
+  - id: l6-17
+    query: "In the easy case where the right child is also right heavy, which rotation fixes it?"
+    type: procedure
+    relevant: [36]
+    answer: "A single rotation on x restores balance."
+  - id: l6-18
+    query: "How do you sort numbers once they are stored in a balanced search tree?"
+    type: procedure
+    relevant: [40]
+    answer: "Insert all the items and then do an in-order traversal, which takes linear time and yields sorted order."
+  - id: l6-19
+    query: "Why do AVL trees use the heights stored at each node?"
+    type: relation
+    relevant: [8, 9]
+    answer: "Because the goal is to keep the height small, and heights can be maintained for free using a local rule, so AVL trees watch them to detect when to rebalance."
+  - id: l6-20
+    query: "Why allow the subtree heights to differ by one instead of requiring them to be exactly equal?"
+    type: relation
+    relevant: [12]
+    answer: "Requiring a difference of zero forces a perfect tree that is impossible to maintain for all n, while a difference of one is almost as good and is easy to maintain."
+  - id: l6-21
+    query: "How does an AVL tree compare to a heap in which operations it supports?"
+    type: relation
+    relevant: [40]
+    answer: "A heap supports insert and delete-min, while an AVL tree also supports delete and finding the next larger and smaller elements."
+  - id: l6-22
+    query: "Why does the minimum-nodes recurrence resemble the Fibonacci sequence?"
+    type: relation
+    relevant: [19]
+    answer: "The recurrence n_h equals one plus n_(h-1) plus n_(h-2), so dropping the plus one gives exactly Fibonacci and n_h is larger than Fibonacci."
+  - id: l6-23
+    query: "Why is the minimum number of nodes analyzed instead of the maximum height directly?"
+    type: relation
+    relevant: [15]
+    answer: "It is the inverse problem and easier to think about: fixing the height and asking the fewest nodes that fit, then inverting to bound the height."
+  - id: l6-24
+    query: "What is the difference between the depth and the height of a node?"
+    type: relation
+    relevant: [6]
+    answer: "Depth is the distance from the node up to the root, while height is the longest path from the node down to a leaf."
+  - id: l6-25
+    query: "If I keep adding items and the tree turns into a long skinny chain, how slow do lookups get?"
+    type: paraphrase
+    relevant: [4]
+    answer: "In that unbalanced case the height is n, so lookups are as slow as scanning the whole thing."
+  - id: l6-26
+    query: "How do you fix a spot where one side leans down two steps more than the other?"
+    type: paraphrase
+    relevant: [30]
+    answer: "You do a rotation at that node to pull the deeper side up and restore balance."
+  - id: l6-27
+    query: "What do you do when the three out-of-place nodes form a zigzag that a single twist won't fix?"
+    type: paraphrase
+    relevant: [31, 32]
+    answer: "You apply two rotations, first straightening the zigzag into a line and then rotating again to balance it."
+  - id: l6-28
+    query: "After adding a new item, why isn't fixing just the first bad spot always enough?"
+    type: paraphrase
+    relevant: [34]
+    answer: "Adding a node can change heights all the way up, so after fixing the lowest violation there may still be violations higher up the tree."
+  - id: l6-29
+    query: "Why would someone pick the array-style sorter over the tree one even though both are balanced?"
+    type: paraphrase
+    relevant: [42]
+    answer: "A heap is in place and uses no extra space, while the tree uses pointers everywhere and loses a constant factor in space."
+  - id: l6-30
+    query: "When you reshuffle the nodes to even things out, how do you know the order of the keys stays correct?"
+    type: paraphrase
+    relevant: [29]
+    answer: "A rotation preserves the in-order traversal of the nodes, so the BST ordering still holds."
