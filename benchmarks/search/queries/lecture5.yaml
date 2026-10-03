@@ -74,7 +74,7 @@ queries:
   - id: l5-15
     query: "How do you find the smallest value stored in a BST?"
     type: procedure
-    relevant: [27]
+    relevant: [27, 28]
     answer: "Keep going to the left until you hit a leaf."
   - id: l5-16
     query: "How is the k-minute check performed during insertion?"
@@ -129,7 +129,7 @@ queries:
   - id: l5-26
     query: "I want to count how many bookings come at or before a certain time, how?"
     type: paraphrase
-    relevant: [36, 39]
+    relevant: [38, 39]
     answer: "Compute rank t by walking down and adding each node and its left subtree whenever you turn right."
   - id: l5-27
     query: "If I just dump already-ordered numbers in one by one, why does the shape go wrong?"

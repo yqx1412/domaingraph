@@ -44,7 +44,7 @@ queries:
   - id: l6-09
     query: "How much time do successor and predecessor searches take in a BST?"
     type: fact
-    relevant: [2]
+    relevant: [2, 3]
     answer: "They can be solved in order h time, where h is the height."
   - id: l6-10
     query: "Approximately what is the value of the golden ratio phi mentioned in the analysis?"

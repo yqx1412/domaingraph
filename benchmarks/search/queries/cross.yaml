@@ -15,8 +15,8 @@ queries:
     query: "Why do binary search tree operations run in order h time and why is that a problem?"
     type: cross
     relevant:
-      lecture5: [22, 41]
-      lecture6: [2, 3]
+      lecture5: [22, 27, 28, 41, 42]
+      lecture6: [2, 3, 4]
     answer: "Insert, find, and successor/predecessor each follow one root-to-leaf path, so they take O(h) time. The problem is that h can be as large as n for an unbalanced tree."
 
   - id: x-03
@@ -40,8 +40,9 @@ queries:
     type: cross
     relevant:
       lecture6: [39, 40]
-      lecture5: [27]
     answer: "Insert all n items into an AVL tree, each insert costing O(log n), then do an in-order traversal in linear time. Total is O(n log n)."
+    # Review: Lecture 5 never covers BST sort (its labeled chunk 27 is about find min/max),
+    # so this query turned out to need Lecture 6 only.
 
   - id: x-06
     query: "Why is any sorting method that only compares elements stuck at n log n?"
@@ -71,7 +72,7 @@ queries:
     query: "How does keeping subtree heights nearly equal guarantee logarithmic height?"
     type: cross
     relevant:
-      lecture6: [16, 20]
+      lecture6: [16, 20, 21]
       lecture5: [42]
     answer: "The fewest nodes in an AVL tree of height h follows a Fibonacci-like recurrence, so n grows like phi^h; inverting gives h < 1.44 log n. This avoids the degenerate list-shaped tree a plain BST can become."
 
@@ -96,5 +97,5 @@ queries:
     type: cross
     relevant:
       lecture6: [28, 29]
-      lecture5: [17, 18]
+      lecture5: [18]
     answer: "A rotation swaps which of two nodes is higher in a constant number of pointer changes. It preserves the BST ordering invariant, so an in-order traversal still yields the same sorted sequence."
