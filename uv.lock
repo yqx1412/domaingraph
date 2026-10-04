@@ -698,6 +698,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+classify = [
+    { name = "scikit-learn" },
+]
 gpu = [
     { name = "nvidia-cublas-cu12", version = "12.8.4.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
     { name = "nvidia-cublas-cu12", version = "12.9.2.10", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
@@ -714,6 +717,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "scikit-learn" },
 ]
 
 [package.metadata]
@@ -727,16 +731,18 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pypdf", specifier = ">=6.19.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "scikit-learn", marker = "extra == 'classify'", specifier = ">=1.7" },
     { name = "sentence-transformers", extras = ["train"], marker = "extra == 'train'", specifier = ">=6.1.0" },
     { name = "torch", marker = "extra == 'train'", specifier = ">=2.9,<3", index = "https://download.pytorch.org/whl/cu128" },
 ]
-provides-extras = ["gpu", "train"]
+provides-extras = ["gpu", "train", "classify"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.6.2" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "ruff", specifier = ">=0.16.9" },
+    { name = "scikit-learn", specifier = ">=1.7" },
 ]
 
 [[package]]
