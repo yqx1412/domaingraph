@@ -1,0 +1,42 @@
+# D8 domain-classifier corpus: 5 domains x 10 lectures, plus 5 lectures from a second
+# algorithms course as an out-of-course test. Labels come from course membership, not
+# from annotation. All videos are official course uploads on YouTube.
+#
+# Splits are by LECTURE, never by chunk: neighbouring chunks overlap and share wording,
+# so a chunk-level split would leak. In every course lectures 3, 6 and 9 are test,
+# lecture 10 is dev and the rest train.
+splits:
+  train: [1, 2, 4, 5, 7, 8]
+  dev: [10]
+  test: [3, 6, 9]
+
+courses:
+  - course: "MIT 6.006 Fall 2011"
+    domain: algorithms
+    # Already ingested for D1-D7 under data/sources
+    lectures: [HtSuA80QTyo, Zc54gFhdpLA, Kg4bqzAqRBM, B7hVxCmfPtM, 9Jry5-82I68,
+               FNeL18KsWPc, Nz1KZXbghj8, 0M_kIqhwbFo, BRO7mVIFt08, rvdJDijO2Ro]
+  - course: "MIT 18.06 Spring 2005"
+    domain: linear_algebra
+    lectures: [J7DzL2_Na80, QVKj3LADCnA, FX4C-JpTFgY, MsIvs_6vC38, JibVXBElKL0,
+               8o5Cmfpeo6g, VqP2tREMvt0, 9Q1q7s1jTzU, yjBerM5jWsc, nHlE7EgJFds]
+  - course: "MIT 6.034 Fall 2010"
+    domain: artificial_intelligence
+    lectures: [TjZBTDzGeGg, PNKj529yY5c, leXa7EKUPFk, j1H3jAAGlEA, gGQ-vAmdAOI,
+               STjW3eH0Cik, l-tzjenXrvI, dARl_gGrS4o, gvmfbePC2pc, 09mb78oiPkA]
+  - course: "MIT 6.042J Fall 2010"
+    domain: discrete_math
+    # Lecture 4 (NuY7szYSXSw, a train lecture) is left out: YouTube's bot check
+    # refused the download, and a train lecture is the cheapest one to lose.
+    lectures: [L3LMbpZIKhQ, z8HKWUWS-lA, NuGDkmwEObM, null, XX7ePR21Ook,
+               h9wxtqoa1jY, 5RSMLgy06Ew, GJpt_3ie4WU, bTyxpoi2dmM, DOIp5D7VMS4]
+  - course: "MIT 6.824 Spring 2020"
+    domain: distributed_systems
+    lectures: [cQP8WApzIQQ, gA4YXUJX7t8, EpIgvowZr00, M_teob23ZzY, UzzcUS2OHqo,
+               64Zp3tzNbpE, 4r8Mz3MMivY, pbmyrNjzdDk, IXHzbCuADt0, jJSh54J1s5o]
+  # Out-of-course test only: same domain as 6.006, different course and lecturers.
+  # Tests whether a model learned "algorithms" or just "6.006".
+  - course: "MIT 6.046J Spring 2015"
+    domain: algorithms
+    split: ooc
+    lectures: [2P-yW7LQr08, EzeYI7p9MjU, iTMn0Kt18tg, hmReJCupbNU, 3MpzavN3Mco]

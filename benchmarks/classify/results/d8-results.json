@@ -1,0 +1,693 @@
+{
+  "tfidf-lr": {
+    "settings": {
+      "C": 10.0,
+      "dev_by_C": {
+        "1.0": 0.9763,
+        "10.0": 0.9802,
+        "100.0": 0.9802
+      }
+    },
+    "device": "cpu",
+    "fit_seconds": 0.7,
+    "sets": {
+      "test": {
+        "n": 756,
+        "accuracy": 0.918,
+        "macro_f1": 0.9174,
+        "ci": [
+          0.8504,
+          0.9766
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 128,
+            "discrete_math": 2
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 112,
+            "algorithms": 3,
+            "discrete_math": 4,
+            "linear_algebra": 1,
+            "distributed_systems": 2
+          },
+          "discrete_math": {
+            "algorithms": 12,
+            "discrete_math": 131,
+            "distributed_systems": 14,
+            "artificial_intelligence": 22,
+            "linear_algebra": 2
+          },
+          "linear_algebra": {
+            "linear_algebra": 102
+          },
+          "distributed_systems": {
+            "distributed_systems": 221
+          }
+        },
+        "ms_per_item": 0.12,
+        "lecture_vote": 1.0
+      },
+      "test-short": {
+        "n": 756,
+        "accuracy": 0.5807,
+        "macro_f1": 0.5634,
+        "ci": [
+          0.4616,
+          0.6998
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 61,
+            "distributed_systems": 39,
+            "artificial_intelligence": 9,
+            "linear_algebra": 1,
+            "discrete_math": 20
+          },
+          "artificial_intelligence": {
+            "distributed_systems": 48,
+            "artificial_intelligence": 49,
+            "algorithms": 11,
+            "linear_algebra": 1,
+            "discrete_math": 13
+          },
+          "discrete_math": {
+            "discrete_math": 75,
+            "distributed_systems": 61,
+            "algorithms": 9,
+            "artificial_intelligence": 32,
+            "linear_algebra": 4
+          },
+          "linear_algebra": {
+            "linear_algebra": 55,
+            "discrete_math": 8,
+            "distributed_systems": 28,
+            "artificial_intelligence": 10,
+            "algorithms": 1
+          },
+          "distributed_systems": {
+            "discrete_math": 4,
+            "distributed_systems": 199,
+            "algorithms": 9,
+            "artificial_intelligence": 9
+          }
+        },
+        "ms_per_item": 0.01
+      },
+      "ooc": {
+        "n": 317,
+        "accuracy": 0.8991,
+        "macro_f1": 0.9468,
+        "ci": [
+          0.8196,
+          0.978
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 285,
+            "artificial_intelligence": 6,
+            "discrete_math": 17,
+            "distributed_systems": 2,
+            "linear_algebra": 7
+          }
+        },
+        "ms_per_item": 0.12,
+        "lecture_vote": 1.0
+      },
+      "queries": {
+        "n": 102,
+        "accuracy": 0.7843,
+        "macro_f1": 0.8791,
+        "ci": [
+          0.7059,
+          0.8627
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 80,
+            "linear_algebra": 2,
+            "distributed_systems": 13,
+            "artificial_intelligence": 6,
+            "discrete_math": 1
+          }
+        },
+        "ms_per_item": 0.02
+      }
+    }
+  },
+  "embed-lr": {
+    "settings": {
+      "C": 100.0,
+      "dev_by_C": {
+        "1.0": 0.9249,
+        "10.0": 0.9249,
+        "100.0": 0.9328
+      }
+    },
+    "device": "cuda (Ollama)",
+    "fit_seconds": 0.2,
+    "sets": {
+      "test": {
+        "n": 756,
+        "accuracy": 0.8399,
+        "macro_f1": 0.8291,
+        "ci": [
+          0.7234,
+          0.937
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 117,
+            "artificial_intelligence": 6,
+            "discrete_math": 4,
+            "linear_algebra": 2,
+            "distributed_systems": 1
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 88,
+            "linear_algebra": 4,
+            "discrete_math": 4,
+            "algorithms": 21,
+            "distributed_systems": 5
+          },
+          "discrete_math": {
+            "discrete_math": 109,
+            "artificial_intelligence": 26,
+            "distributed_systems": 25,
+            "algorithms": 10,
+            "linear_algebra": 11
+          },
+          "linear_algebra": {
+            "linear_algebra": 101,
+            "discrete_math": 1
+          },
+          "distributed_systems": {
+            "distributed_systems": 220,
+            "algorithms": 1
+          }
+        },
+        "ms_per_item": 15.19,
+        "lecture_vote": 1.0
+      },
+      "test-short": {
+        "n": 756,
+        "accuracy": 0.4286,
+        "macro_f1": 0.4251,
+        "ci": [
+          0.3353,
+          0.5224
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 38,
+            "artificial_intelligence": 58,
+            "discrete_math": 26,
+            "distributed_systems": 5,
+            "linear_algebra": 3
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 97,
+            "algorithms": 6,
+            "discrete_math": 14,
+            "linear_algebra": 1,
+            "distributed_systems": 4
+          },
+          "discrete_math": {
+            "discrete_math": 48,
+            "artificial_intelligence": 100,
+            "distributed_systems": 20,
+            "linear_algebra": 3,
+            "algorithms": 10
+          },
+          "linear_algebra": {
+            "linear_algebra": 31,
+            "discrete_math": 11,
+            "artificial_intelligence": 51,
+            "algorithms": 8,
+            "distributed_systems": 1
+          },
+          "distributed_systems": {
+            "artificial_intelligence": 71,
+            "distributed_systems": 110,
+            "discrete_math": 28,
+            "algorithms": 12
+          }
+        },
+        "ms_per_item": 29.72
+      },
+      "ooc": {
+        "n": 317,
+        "accuracy": 0.5647,
+        "macro_f1": 0.7218,
+        "ci": [
+          0.4188,
+          0.6769
+        ],
+        "confusion": {
+          "algorithms": {
+            "artificial_intelligence": 40,
+            "algorithms": 179,
+            "discrete_math": 41,
+            "distributed_systems": 31,
+            "linear_algebra": 26
+          }
+        },
+        "ms_per_item": 14.91,
+        "lecture_vote": 1.0
+      },
+      "queries": {
+        "n": 102,
+        "accuracy": 0.6765,
+        "macro_f1": 0.807,
+        "ci": [
+          0.5882,
+          0.7647
+        ],
+        "confusion": {
+          "algorithms": {
+            "artificial_intelligence": 31,
+            "algorithms": 69,
+            "discrete_math": 2
+          }
+        },
+        "ms_per_item": 132.6
+      }
+    }
+  },
+  "zeroshot-embed": {
+    "settings": {},
+    "device": "cuda (Ollama)",
+    "fit_seconds": 0.0,
+    "sets": {
+      "test": {
+        "n": 756,
+        "accuracy": 0.6601,
+        "macro_f1": 0.6507,
+        "ci": [
+          0.5298,
+          0.7911
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 115,
+            "distributed_systems": 1,
+            "linear_algebra": 8,
+            "artificial_intelligence": 4,
+            "discrete_math": 2
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 64,
+            "linear_algebra": 11,
+            "algorithms": 38,
+            "discrete_math": 6,
+            "distributed_systems": 3
+          },
+          "discrete_math": {
+            "discrete_math": 62,
+            "artificial_intelligence": 11,
+            "distributed_systems": 21,
+            "algorithms": 68,
+            "linear_algebra": 19
+          },
+          "linear_algebra": {
+            "linear_algebra": 98,
+            "algorithms": 2,
+            "artificial_intelligence": 2
+          },
+          "distributed_systems": {
+            "distributed_systems": 160,
+            "artificial_intelligence": 31,
+            "algorithms": 30
+          }
+        },
+        "ms_per_item": 15.34,
+        "lecture_vote": 0.8
+      },
+      "test-short": {
+        "n": 756,
+        "accuracy": 0.3876,
+        "macro_f1": 0.386,
+        "ci": [
+          0.3132,
+          0.4626
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 34,
+            "artificial_intelligence": 59,
+            "discrete_math": 17,
+            "distributed_systems": 15,
+            "linear_algebra": 5
+          },
+          "artificial_intelligence": {
+            "distributed_systems": 15,
+            "artificial_intelligence": 76,
+            "discrete_math": 15,
+            "linear_algebra": 7,
+            "algorithms": 9
+          },
+          "discrete_math": {
+            "discrete_math": 43,
+            "artificial_intelligence": 66,
+            "distributed_systems": 42,
+            "linear_algebra": 11,
+            "algorithms": 19
+          },
+          "linear_algebra": {
+            "linear_algebra": 37,
+            "distributed_systems": 7,
+            "discrete_math": 8,
+            "artificial_intelligence": 43,
+            "algorithms": 7
+          },
+          "distributed_systems": {
+            "artificial_intelligence": 96,
+            "distributed_systems": 103,
+            "algorithms": 16,
+            "discrete_math": 5,
+            "linear_algebra": 1
+          }
+        },
+        "ms_per_item": 9.62
+      },
+      "ooc": {
+        "n": 317,
+        "accuracy": 0.6278,
+        "macro_f1": 0.7713,
+        "ci": [
+          0.4465,
+          0.7781
+        ],
+        "confusion": {
+          "algorithms": {
+            "distributed_systems": 22,
+            "algorithms": 199,
+            "artificial_intelligence": 31,
+            "discrete_math": 17,
+            "linear_algebra": 48
+          }
+        },
+        "ms_per_item": 15.79,
+        "lecture_vote": 0.8
+      },
+      "queries": {
+        "n": 102,
+        "accuracy": 0.6275,
+        "macro_f1": 0.7711,
+        "ci": [
+          0.5392,
+          0.7157
+        ],
+        "confusion": {
+          "algorithms": {
+            "artificial_intelligence": 14,
+            "algorithms": 64,
+            "linear_algebra": 10,
+            "discrete_math": 10,
+            "distributed_systems": 4
+          }
+        },
+        "ms_per_item": 10.01
+      }
+    }
+  },
+  "zeroshot-llm": {
+    "settings": {
+      "model": "qwen3:8b"
+    },
+    "device": "cuda (Ollama)",
+    "fit_seconds": 0.0,
+    "sets": {
+      "test": {
+        "n": 756,
+        "accuracy": 0.7923,
+        "macro_f1": 0.7888,
+        "ci": [
+          0.6312,
+          0.9132
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 123,
+            "discrete_math": 7
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 92,
+            "discrete_math": 13,
+            "linear_algebra": 5,
+            "distributed_systems": 1,
+            "algorithms": 11
+          },
+          "discrete_math": {
+            "discrete_math": 90,
+            "distributed_systems": 63,
+            "artificial_intelligence": 4,
+            "algorithms": 24
+          },
+          "linear_algebra": {
+            "linear_algebra": 73,
+            "discrete_math": 28,
+            "algorithms": 1
+          },
+          "distributed_systems": {
+            "distributed_systems": 221
+          }
+        },
+        "ms_per_item": 244.53,
+        "lecture_vote": 0.8667
+      },
+      "test-short": {
+        "n": 756,
+        "accuracy": 0.5728,
+        "macro_f1": 0.564,
+        "ci": [
+          0.4482,
+          0.688
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 70,
+            "discrete_math": 31,
+            "artificial_intelligence": 9,
+            "distributed_systems": 19,
+            "linear_algebra": 1
+          },
+          "artificial_intelligence": {
+            "discrete_math": 39,
+            "artificial_intelligence": 51,
+            "distributed_systems": 20,
+            "linear_algebra": 1,
+            "algorithms": 11
+          },
+          "discrete_math": {
+            "discrete_math": 66,
+            "artificial_intelligence": 25,
+            "algorithms": 24,
+            "distributed_systems": 66
+          },
+          "linear_algebra": {
+            "linear_algebra": 58,
+            "algorithms": 10,
+            "discrete_math": 27,
+            "distributed_systems": 5,
+            "artificial_intelligence": 2
+          },
+          "distributed_systems": {
+            "distributed_systems": 188,
+            "artificial_intelligence": 14,
+            "discrete_math": 8,
+            "algorithms": 11
+          }
+        },
+        "ms_per_item": 153.1
+      },
+      "ooc": {
+        "n": 317,
+        "accuracy": 0.8202,
+        "macro_f1": 0.9012,
+        "ci": [
+          0.6944,
+          0.9108
+        ],
+        "confusion": {
+          "algorithms": {
+            "distributed_systems": 6,
+            "algorithms": 260,
+            "discrete_math": 44,
+            "linear_algebra": 6,
+            "artificial_intelligence": 1
+          }
+        },
+        "ms_per_item": 223.84,
+        "lecture_vote": 1.0
+      },
+      "queries": {
+        "n": 102,
+        "accuracy": 0.6569,
+        "macro_f1": 0.7929,
+        "ci": [
+          0.5588,
+          0.7451
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 67,
+            "discrete_math": 26,
+            "linear_algebra": 2,
+            "distributed_systems": 6,
+            "artificial_intelligence": 1
+          }
+        },
+        "ms_per_item": 161.09
+      }
+    },
+    "invalid_replies": 0
+  },
+  "finetuned-encoder": {
+    "settings": {
+      "epochs": 3,
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 1.1795
+        },
+        {
+          "epoch": 2,
+          "loss": 0.419
+        },
+        {
+          "epoch": 3,
+          "loss": 0.2089
+        }
+      ]
+    },
+    "device": "cuda",
+    "fit_seconds": 26.5,
+    "sets": {
+      "test": {
+        "n": 756,
+        "accuracy": 0.8452,
+        "macro_f1": 0.8349,
+        "ci": [
+          0.7152,
+          0.9417
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 117,
+            "distributed_systems": 1,
+            "linear_algebra": 1,
+            "discrete_math": 7,
+            "artificial_intelligence": 4
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 89,
+            "algorithms": 14,
+            "linear_algebra": 9,
+            "discrete_math": 5,
+            "distributed_systems": 5
+          },
+          "discrete_math": {
+            "discrete_math": 110,
+            "distributed_systems": 18,
+            "artificial_intelligence": 26,
+            "linear_algebra": 3,
+            "algorithms": 24
+          },
+          "linear_algebra": {
+            "linear_algebra": 102
+          },
+          "distributed_systems": {
+            "distributed_systems": 221
+          }
+        },
+        "ms_per_item": 1.75,
+        "lecture_vote": 0.9333
+      },
+      "test-short": {
+        "n": 756,
+        "accuracy": 0.496,
+        "macro_f1": 0.49,
+        "ci": [
+          0.3944,
+          0.5823
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 34,
+            "artificial_intelligence": 52,
+            "distributed_systems": 12,
+            "discrete_math": 31,
+            "linear_algebra": 1
+          },
+          "artificial_intelligence": {
+            "artificial_intelligence": 80,
+            "distributed_systems": 14,
+            "algorithms": 6,
+            "discrete_math": 19,
+            "linear_algebra": 3
+          },
+          "discrete_math": {
+            "discrete_math": 63,
+            "artificial_intelligence": 77,
+            "distributed_systems": 32,
+            "linear_algebra": 3,
+            "algorithms": 6
+          },
+          "linear_algebra": {
+            "linear_algebra": 48,
+            "artificial_intelligence": 23,
+            "discrete_math": 24,
+            "algorithms": 4,
+            "distributed_systems": 3
+          },
+          "distributed_systems": {
+            "artificial_intelligence": 58,
+            "distributed_systems": 150,
+            "discrete_math": 10,
+            "algorithms": 3
+          }
+        },
+        "ms_per_item": 0.21
+      },
+      "ooc": {
+        "n": 317,
+        "accuracy": 0.6656,
+        "macro_f1": 0.7992,
+        "ci": [
+          0.4444,
+          0.84
+        ],
+        "confusion": {
+          "algorithms": {
+            "artificial_intelligence": 15,
+            "algorithms": 211,
+            "discrete_math": 43,
+            "distributed_systems": 18,
+            "linear_algebra": 30
+          }
+        },
+        "ms_per_item": 1.75,
+        "lecture_vote": 0.8
+      },
+      "queries": {
+        "n": 102,
+        "accuracy": 0.7353,
+        "macro_f1": 0.8475,
+        "ci": [
+          0.6471,
+          0.8235
+        ],
+        "confusion": {
+          "algorithms": {
+            "algorithms": 75,
+            "distributed_systems": 15,
+            "discrete_math": 8,
+            "artificial_intelligence": 4
+          }
+        },
+        "ms_per_item": 0.24
+      }
+    }
+  }
+}
