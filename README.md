@@ -228,7 +228,7 @@ The 7 new lectures were downloaded as audio from MIT OCW's YouTube channel (`dat
 - **It didn't help on the test questions.** The model learned the training task: dev, which matches a fact statement to its passage, gained 0.07 MRR. But the D4 queries are questions, and the change there is within noise.
 - **Paraphrased questions got worse** (0.52 -> 0.44 MRR, and 0.45 -> 0.30 with all 10 lectures): the tuned model relies more on the lecture's own wording.
 - **General search didn't get worse** on average. Individual sets moved both ways: SciFact +0.055, FEVER -0.047.
-- **The likely fix is question-shaped training data,** such as LLM-generated questions per training passage, plus hard negatives from the same lecture.
+- **Question-shaped training data didn't fix it (D7b).** qwen3:8b wrote 609 questions for the training passages, and the best variant on Lecture 10's generated questions (with hard negatives from the same lecture) gained 0.08 dev MRR. On the D4 queries it scored 0.572 vs 0.582 (-0.011 [-0.064, +0.043]): procedure questions gained 0.10, paraphrases lost 0.11, and the NanoBEIR mean dropped 0.012. Base bge-m3 stays the search model.
 
 Full write-up: [`benchmarks/finetune/results/d7-finetune.md`](benchmarks/finetune/results/d7-finetune.md).
 
