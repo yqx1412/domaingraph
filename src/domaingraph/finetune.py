@@ -38,8 +38,9 @@ BASE_MODEL = "BAAI/bge-m3"
 class Pair:
     anchor: str
     positive: str
-    kind: str  # fact | concept | relation
+    kind: str  # fact | concept | relation | question
     source: str  # source id the pair comes from
+    negative: str | None = None  # a hard negative passage (question pairs only)
 
 
 def build_pairs(
@@ -155,9 +156,13 @@ def train(pairs: list[Pair], dev, cfg: TrainConfig) -> dict[str, Any]:
     model.max_seq_length = cfg.max_seq_length
     before = dev(model)
 
-    data = Dataset.from_dict(
-        {"anchor": [p.anchor for p in pairs], "positive": [p.positive for p in pairs]}
-    ).shuffle(seed=cfg.seed)
+    columns = {"anchor": [p.anchor for p in pairs], "positive": [p.positive for p in pairs]}
+    with_neg = sum(p.negative is not None for p in pairs)
+    if with_neg == len(pairs):
+        columns["negative"] = [p.negative for p in pairs]  # (anchor, positive, negative)
+    elif with_neg:
+        raise ValueError(f"{with_neg} of {len(pairs)} pairs have a negative; all or none")
+    data = Dataset.from_dict(columns).shuffle(seed=cfg.seed)
     loss = CachedMultipleNegativesRankingLoss(model, mini_batch_size=cfg.mini_batch_size)
     args = SentenceTransformerTrainingArguments(
         output_dir=str(cfg.out / "checkpoints"),

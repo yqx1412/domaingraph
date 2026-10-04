@@ -1,4 +1,5 @@
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -6,8 +7,10 @@ import yaml
 
 from domaingraph.evaluate_search import paired_bootstrap
 
+# Usage: python compare.py [tuned results json]   (default: D7's tuned.json)
+tuned_path = Path(sys.argv[1] if len(sys.argv) > 1 else "benchmarks/finetune/results/tuned.json")
 base = json.loads(Path("benchmarks/finetune/results/base.json").read_text(encoding="utf-8"))
-tuned = json.loads(Path("benchmarks/finetune/results/tuned.json").read_text(encoding="utf-8"))
+tuned = json.loads(tuned_path.read_text(encoding="utf-8"))
 qtype = {}
 for f in Path("benchmarks/search/queries").glob("*.yaml"):
     for q in yaml.safe_load(f.read_text(encoding="utf-8"))["queries"]:
@@ -30,6 +33,8 @@ for corpus in ("d4_l5-7", "d4_all10"):
     better = sum(y > x for x, y in pairs_mrr)
     worse = sum(y < x for x, y in pairs_mrr)
     print(f"  queries better {better}, worse {worse}")
+if "nanobeir" not in tuned:
+    sys.exit(0)  # a D4-only (--no-beir) run
 nb, nt = base["nanobeir"], tuned["nanobeir"]
 print("\nNanoBEIR nDCG@10:")
 for k in nb:

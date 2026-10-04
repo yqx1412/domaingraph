@@ -13,7 +13,8 @@ wheels/
 .env
 runs/
 *.jsonl
-
+# D7b's generated training/dev questions are versioned data, not run output
+!benchmarks/finetune/questions/*.jsonl
 # Ingested sources (transcripts, chunks); see `domaingraph --out`
 data/
 
