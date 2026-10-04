@@ -232,6 +232,25 @@ The 7 new lectures were downloaded as audio from MIT OCW's YouTube channel (`dat
 
 Full write-up: [`benchmarks/finetune/results/d7-finetune.md`](benchmarks/finetune/results/d7-finetune.md).
 
+## D8: domain classifier
+
+Which of five domains is a lecture passage from? The corpus is 49 MIT lectures, one course per domain (algorithms, linear algebra, AI, discrete math, distributed systems), split by lecture, plus 5 lectures of 6.046J as an algorithms course the models never saw. `uv sync --extra train --extra classify`, then `uv run python benchmarks/classify/run.py`.
+
+| Method | Test acc | Lecture vote | 12-word snippets | 6.046J (other course) | D4 queries | ms/chunk |
+|---|---|---|---|---|---|---|
+| **TF-IDF + logistic regression** | **0.918** | 15/15 | **0.581** | **0.899** | **0.784** | 0.12 (CPU) |
+| bge-small fine-tuned | 0.845 | 14/15 | 0.496 | 0.666 | 0.735 | 1.75 (GPU) |
+| frozen bge-m3 + logistic regression | 0.840 | 15/15 | 0.429 | 0.565 | 0.676 | 15 |
+| zero-shot qwen3:8b | 0.792 | 13/15 | 0.573 | 0.820 | 0.657 | 245 |
+| zero-shot bge-m3 (nearest description) | 0.660 | 12/15 | 0.388 | 0.628 | 0.627 | 15 |
+
+- **TF-IDF wins everywhere** and is about 2,000x faster than the LLM.
+- **The fine-tuned encoder learned the course, not the field:** 0.67 on 6.046J, 23 points behind TF-IDF.
+- **Short text defeats every method.** The best sends 22 of D4's 102 algorithms questions to the wrong domain, so domain routing of queries isn't worth doing.
+- **Whole sources are easy:** a majority vote over chunks gets all 20 held-out lectures right with TF-IDF. That's the use worth keeping, once the graph holds a second domain.
+
+Full write-up: [`benchmarks/classify/results/d8-classify.md`](benchmarks/classify/results/d8-classify.md).
+
 ## Development
 
 ```powershell

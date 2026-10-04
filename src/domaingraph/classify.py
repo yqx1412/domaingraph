@@ -310,7 +310,7 @@ class EncoderClassifier:
                 opt.step()
                 sched.step()
                 opt.zero_grad()
-                total += float(loss) * len(batch)
+                total += loss.item() * len(batch)
             row = {"epoch": epoch + 1, "loss": round(total / len(texts), 4)}
             if on_epoch:
                 row |= on_epoch(epoch + 1)
