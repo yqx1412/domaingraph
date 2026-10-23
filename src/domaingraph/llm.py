@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import contextlib
 import json
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -125,17 +127,55 @@ class OllamaStructured(_OllamaBase):
         )
 
 
-class OllamaEmbedder(_OllamaBase):
-    """``/api/embed``; vectors come back L2-normalized from Ollama."""
+def _transient(exc: LLMError) -> bool:
+    """Whether a failed request may succeed if sent again: no connection, or HTTP 5xx."""
+    cause = exc.__cause__
+    if isinstance(cause, httpx.HTTPStatusError):
+        return cause.response.status_code >= 500
+    return isinstance(cause, httpx.TransportError)
 
-    def __init__(self, model: str = "bge-m3", base_url: str = DEFAULT_BASE_URL, **kw: Any):
+
+class OllamaEmbedder(_OllamaBase):
+    """``/api/embed``; vectors come back L2-normalized from Ollama.
+
+    A failed request is retried after a short pause when the failure may pass: no connection,
+    or HTTP 5xx (Ollama answers 500 when its runner crashes, e.g. on a CUDA error, and starts a
+    new one for the next request). Embedding is idempotent, so a retry is safe. A 4xx (a wrong
+    model name, a bad request) fails at once."""
+
+    def __init__(
+        self,
+        model: str = "bge-m3",
+        base_url: str = DEFAULT_BASE_URL,
+        *,
+        retry_delays: tuple[float, ...] = (0.5, 2.0),
+        sleep: Callable[[float], None] = time.sleep,
+        **kw: Any,
+    ):
         super().__init__(model, base_url, **kw)
+        self.retry_delays = retry_delays
+        self._sleep = sleep
+
+    def _post_retrying(self, payload: dict[str, Any]) -> dict[str, Any]:
+        tries = len(self.retry_delays) + 1
+        for delay in (*self.retry_delays, None):
+            try:
+                return self._post("/api/embed", payload)
+            except LLMError as exc:
+                if not _transient(exc):
+                    raise
+                if delay is None:
+                    if tries == 1:
+                        raise
+                    raise LLMError(f"{exc} (gave up after {tries} tries)") from exc.__cause__
+                self._sleep(delay)
+        raise AssertionError("unreachable")
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
         out: list[list[float]] = []
         for i in range(0, len(texts), 64):
-            data = self._post("/api/embed", {"model": self.model, "input": texts[i : i + 64]})
+            data = self._post_retrying({"model": self.model, "input": texts[i : i + 64]})
             out += data["embeddings"]
         return out
