@@ -579,6 +579,43 @@ def test_ollama_embedder_batches() -> None:
     assert e.embed([]) == []
 
 
+def _flaky(responses: list):
+    """A transport answering with each item in turn: a status code, or an exception."""
+    calls = []
+
+    def handler(req):
+        calls.append(req)
+        item = responses[min(len(calls), len(responses)) - 1]
+        if isinstance(item, Exception):
+            raise item
+        if item == 200:
+            n = len(json.loads(req.content)["input"])
+            return httpx.Response(200, json={"embeddings": [[1.0]] * n})
+        return httpx.Response(item, json={"error": f"status {item}"})
+
+    return httpx.MockTransport(handler), calls
+
+
+def test_ollama_embedder_retries_a_runner_crash() -> None:
+    # Ollama answers 500 when its runner dies (the CUDA crash seen in M5), then recovers.
+    transport, calls = _flaky([500, httpx.ConnectError("refused"), 200])
+    pauses = []
+    e = OllamaEmbedder(transport=transport, sleep=pauses.append)
+    assert e.embed(["a", "b"]) == [[1.0], [1.0]]
+    assert len(calls) == 3 and pauses == [0.5, 2.0]
+
+
+def test_ollama_embedder_gives_up_and_never_retries_a_4xx() -> None:
+    transport, calls = _flaky([500])
+    with pytest.raises(LLMError, match=r"HTTP 500.*gave up after 3 tries"):
+        OllamaEmbedder(transport=transport, sleep=lambda s: None).embed(["a"])
+    assert len(calls) == 3
+    transport, calls = _flaky([404])
+    with pytest.raises(LLMError, match="HTTP 404"):
+        OllamaEmbedder(transport=transport, sleep=lambda s: None).embed(["a"])
+    assert len(calls) == 1
+
+
 # -- CLI end to end, with the LLM and embedder replaced ---------------------------------
 
 
